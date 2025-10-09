@@ -54,10 +54,13 @@ class HeyGenService:
                 response.raise_for_status()
                 data = response.json()
                 
-                # Filter Turkish voices
+                # Filter Turkish voices (check both language and locale)
+                all_voices = data.get("data", {}).get("voices", [])
                 turkish_voices = [
-                    voice for voice in data.get("data", {}).get("voices", [])
-                    if voice.get("language", "").lower() == "turkish"
+                    voice for voice in all_voices
+                    if "tr" in voice.get("language", "").lower() or 
+                       "tr" in voice.get("locale", "").lower() or
+                       "turkish" in voice.get("language", "").lower()
                 ]
                 
                 self.voices_cache = turkish_voices
@@ -108,30 +111,27 @@ class HeyGenService:
                 "Content-Type": "application/json"
             }
             
-            # Create video generation request
+            # Create video generation request (HeyGen v2 API format)
             payload = {
                 "video_inputs": [{
                     "character": {
                         "type": "avatar",
-                        "avatar_id": avatar_id,
-                        "avatar_style": "normal"
+                        "avatar_id": avatar_id
                     },
                     "voice": {
                         "type": "text",
                         "input_text": truncated_text,
-                        "voice_id": self.turkish_voice_id,
-                        "locale": "tr-TR"  # Turkish locale
+                        "voice_id": self.turkish_voice_id
                     },
                     "background": {
                         "type": "color",
-                        "value": "#FFFFFF"  # White background
+                        "value": "#FFFFFF"
                     }
                 }],
                 "dimension": {
                     "width": 1280,
                     "height": 720
                 },
-                "aspect_ratio": "16:9",
                 "test": False
             }
             
