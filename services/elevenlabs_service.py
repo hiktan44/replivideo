@@ -33,7 +33,8 @@ class ElevenLabsService:
         try:
             voice_id = self.voice_mapping.get(voice_type, self.voice_mapping["tr_female_professional"])
             
-            audio_generator = await self.client.text_to_speech.convert(
+            # Don't await - convert() returns an async generator directly
+            audio_generator = self.client.text_to_speech.convert(
                 text=text[:5000],
                 voice_id=voice_id,
                 model_id="eleven_multilingual_v2",

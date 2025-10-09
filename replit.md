@@ -8,7 +8,16 @@ The application provides a REST API and web interface for submitting any web URL
 
 ## Recent Changes (October 2025)
 
-**Web Content Expansion**: System now supports any website URL, not just GitHub repositories
+**FFmpeg Video Composition** (Latest - Oct 9):
+- ✅ Implemented real video composition using FFmpeg
+- ✅ Fixed ElevenLabs async generator bug (removed incorrect await)
+- ✅ Fixed AI service f-string backslash syntax errors (used chr(39) for apostrophes)
+- ✅ Videos now properly concatenate D-ID avatar clips with ElevenLabs audio
+- ✅ Added QuickTime compatibility with `-movflags +faststart`
+- ✅ Installed FFmpeg system dependency
+- ✅ Real MP4 files now generated instead of text placeholders
+
+**Web Content Expansion**:
 - Added `WebsiteAnalyzer` service for general web scraping using BeautifulSoup
 - Added `ContentAnalyzer` unified router that auto-detects URL type (GitHub vs general website)
 - Updated AI prompts to generate appropriate scripts for both GitHub repos and general websites
@@ -108,11 +117,14 @@ Preferred communication style: Simple, everyday language.
 - Text truncation at 500 characters per clip
 - Multiple avatar types: professional/casual, male/female
 
-**Composition Strategy**: Implemented VideoComposer service
-- Creates valid MP4 files for demo mode
-- Properly awaits video composition and stores file path
-- Future enhancement: FFmpeg integration for real video composition
-- Combines multiple avatar clips with audio track
+**Composition Strategy**: FFmpeg-based VideoComposer service
+- **Real video composition using FFmpeg** (implemented Oct 9, 2025)
+- Concatenates D-ID avatar clips using FFmpeg concat demuxer
+- Muxes ElevenLabs narration audio with AAC encoding
+- QuickTime compatibility via `-movflags +faststart`
+- Async subprocess execution to keep service responsive
+- Graceful fallback to demo mode if FFmpeg fails
+- Automatic temp file cleanup after composition
 
 ## External Dependencies
 
@@ -166,6 +178,13 @@ Preferred communication style: Simple, everyday language.
 - Dependency management via `uv sync`
 - Environment-based configuration
 
+**FFmpeg**: Video composition system dependency (NEW - Oct 9, 2025)
+- System package: `ffmpeg-full` installed via Nix
+- Used for concatenating D-ID avatar video clips
+- Muxes ElevenLabs audio with video streams
+- Provides QuickTime compatibility with movflags
+- Async subprocess execution for non-blocking operations
+
 ### Content Source Integration
 
 **GitHub API**: Repository analysis (when GitHub URL detected)
@@ -185,9 +204,3 @@ Preferred communication style: Simple, everyday language.
 - Mentioned in data models (`youtube_url` field)
 - Not yet implemented
 - Would require YouTube Data API credentials
-
-**FFmpeg**: Video composition
-- Currently placeholder/demo mode
-- Required for real video assembly
-- Combines avatar clips with audio tracks
-- Not yet integrated in codebase
