@@ -129,7 +129,8 @@ class ScriptGenerator:
                 timestamp = line.split(']')[0].replace('[', '')
                 title = line.split(']')[1].strip() if ']' in line else ""
                 
-                section_type = "avatar" if any(x in title.upper() for x in ["AÇILIŞ", "GEÇİŞ", "KAPANIŞ"]) else "screen"
+                # All sections are avatar-based for video generation
+                section_type = "avatar"
                 
                 current_section = {
                     "timestamp": timestamp,
