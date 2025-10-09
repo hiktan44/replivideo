@@ -161,7 +161,7 @@ class HeyGenService:
                     await asyncio.sleep(2)  # Wait 2 seconds between checks
                     
                     status_response = await client.get(
-                        f"{self.base_url}/video/status",
+                        f"{self.base_url}/video_status",
                         headers=headers,
                         params={"video_id": video_id}
                     )
@@ -215,15 +215,21 @@ class HeyGenService:
         
         Path("videos").mkdir(exist_ok=True)
         
-        # Minimal valid MP4 file header
-        mp4_header = bytes([
-            0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70,
-            0x69, 0x73, 0x6F, 0x6D, 0x00, 0x00, 0x02, 0x00,
-            0x69, 0x73, 0x6F, 0x6D, 0x69, 0x73, 0x6F, 0x32,
-            0x61, 0x76, 0x63, 0x31, 0x6D, 0x70, 0x34, 0x31,
-        ])
-        
-        Path(video_path).write_bytes(mp4_header)
+        # Copy the actual demo video file
+        demo_source = Path("demo_assets/demo_video.mp4")
+        if demo_source.exists():
+            # Use the real demo video
+            import shutil
+            shutil.copy(demo_source, video_path)
+        else:
+            # Fallback: create a simple valid MP4
+            import subprocess
+            subprocess.run([
+                "ffmpeg", "-f", "lavfi", "-i", "color=c=black:s=1280x720:d=5",
+                "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
+                "-t", "5", "-c:v", "libx264", "-c:a", "aac", 
+                "-movflags", "+faststart", video_path, "-y"
+            ], capture_output=True, check=False)
         
         print(f"📝 Demo HeyGen video created: {video_path}")
         return video_path
@@ -241,7 +247,7 @@ class HeyGenService:
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(
-                    f"{self.base_url}/video/status",
+                    f"{self.base_url}/video_status",
                     headers=headers,
                     params={"video_id": video_id}
                 )
