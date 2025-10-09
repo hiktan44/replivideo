@@ -1,0 +1,277 @@
+recaptcha__tr.js:482 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+(anonim) @ recaptcha__tr.js:482
+rkP.render @ recaptcha__tr.js:1526
+(anonim) @ recaptcha__tr.js:201
+(anonim) @ recaptcha__tr.js:667
+(anonim) @ recaptcha__tr.js:189
+J.F @ recaptcha__tr.js:1544
+Y.W @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+P @ recaptcha__tr.js:752
+Promise.then
+H @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+c @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:640
+pD @ recaptcha__tr.js:1013
+D @ recaptcha__tr.js:465
+n @ _app-3e746a0ad2e37f19.js:28
+recaptcha__tr.js:482 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+(anonim) @ recaptcha__tr.js:482
+rkP.render @ recaptcha__tr.js:1526
+(anonim) @ recaptcha__tr.js:201
+(anonim) @ recaptcha__tr.js:667
+(anonim) @ recaptcha__tr.js:189
+J.F @ recaptcha__tr.js:1544
+Y.W @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+P @ recaptcha__tr.js:752
+Promise.then
+H @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+c @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:640
+pD @ recaptcha__tr.js:1013
+D @ recaptcha__tr.js:465
+n @ _app-3e746a0ad2e37f19.js:28
+recaptcha__tr.js:482 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+(anonim) @ recaptcha__tr.js:482
+rkP.render @ recaptcha__tr.js:1526
+(anonim) @ recaptcha__tr.js:201
+(anonim) @ recaptcha__tr.js:667
+(anonim) @ recaptcha__tr.js:189
+J.F @ recaptcha__tr.js:1544
+Y.W @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+P @ recaptcha__tr.js:752
+Promise.then
+H @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+c @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:640
+pD @ recaptcha__tr.js:1013
+D @ recaptcha__tr.js:465
+n @ _app-3e746a0ad2e37f19.js:28
+recaptcha__tr.js:539 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+(anonim) @ recaptcha__tr.js:539
+(anonim) @ recaptcha__tr.js:737
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:255
+Promise.then
+(anonim) @ recaptcha__tr.js:255
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+P @ recaptcha__tr.js:752
+Promise.then
+H @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+c @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:640
+pD @ recaptcha__tr.js:1013
+D @ recaptcha__tr.js:465
+n @ _app-3e746a0ad2e37f19.js:28
+recaptcha__tr.js:539 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+(anonim) @ recaptcha__tr.js:539
+(anonim) @ recaptcha__tr.js:737
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:255
+Promise.then
+(anonim) @ recaptcha__tr.js:255
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+P @ recaptcha__tr.js:752
+Promise.then
+H @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+c @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:640
+pD @ recaptcha__tr.js:1013
+D @ recaptcha__tr.js:465
+n @ _app-3e746a0ad2e37f19.js:28
+recaptcha__tr.js:539 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+(anonim) @ recaptcha__tr.js:539
+(anonim) @ recaptcha__tr.js:737
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:255
+Promise.then
+(anonim) @ recaptcha__tr.js:255
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+P @ recaptcha__tr.js:752
+Promise.then
+H @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+c @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:640
+pD @ recaptcha__tr.js:1013
+D @ recaptcha__tr.js:465
+n @ _app-3e746a0ad2e37f19.js:28
+recaptcha__tr.js:539 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+(anonim) @ recaptcha__tr.js:539
+(anonim) @ recaptcha__tr.js:737
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:255
+Promise.then
+(anonim) @ recaptcha__tr.js:255
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+P @ recaptcha__tr.js:752
+Promise.then
+H @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+c @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:640
+pD @ recaptcha__tr.js:1013
+D @ recaptcha__tr.js:465
+n @ _app-3e746a0ad2e37f19.js:28
+recaptcha__tr.js:539 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+(anonim) @ recaptcha__tr.js:539
+(anonim) @ recaptcha__tr.js:737
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:255
+Promise.then
+(anonim) @ recaptcha__tr.js:255
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+P @ recaptcha__tr.js:752
+Promise.then
+H @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+c @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:640
+pD @ recaptcha__tr.js:1013
+D @ recaptcha__tr.js:465
+n @ _app-3e746a0ad2e37f19.js:28
+recaptcha__tr.js:539 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+(anonim) @ recaptcha__tr.js:539
+(anonim) @ recaptcha__tr.js:737
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:696
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+(anonim) @ recaptcha__tr.js:606
+(anonim) @ recaptcha__tr.js:255
+Promise.then
+(anonim) @ recaptcha__tr.js:255
+(anonim) @ recaptcha__tr.js:750
+k.next @ recaptcha__tr.js:666
+P @ recaptcha__tr.js:752
+Promise.then
+H @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:752
+(anonim) @ recaptcha__tr.js:328
+c @ recaptcha__tr.js:254
+(anonim) @ recaptcha__tr.js:640
+pD @ recaptcha__tr.js:1013
+D @ recaptcha__tr.js:465
+n @ _app-3e746a0ad2e37f19.js:28
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
