@@ -130,27 +130,44 @@ class ScriptGenerator:
         current_section = None
         
         for line in script_text.strip().split('\n'):
-            if line.startswith('['):
+            # Check for section markers like **[00:00-00:20] or [00:00]
+            if '**[' in line or (line.startswith('[') and ']' in line):
                 if current_section:
                     sections.append(current_section)
                 
-                timestamp = line.split(']')[0].replace('[', '')
-                title = line.split(']')[1].strip() if ']' in line else ""
+                # Extract timestamp and title
+                if '**[' in line:
+                    # Format: **[00:00-00:20] TITLE**
+                    parts = line.replace('**', '').strip()
+                    if '[' in parts and ']' in parts:
+                        timestamp_part = parts[parts.find('[') + 1:parts.find(']')]
+                        title_part = parts[parts.find(']') + 1:].strip()
+                    else:
+                        timestamp_part = "00:00"
+                        title_part = line
+                else:
+                    # Format: [00:00] TITLE
+                    timestamp_part = line.split(']')[0].replace('[', '')
+                    title_part = line.split(']')[1].strip() if ']' in line else ""
                 
                 # All sections are avatar-based for video generation
                 section_type = "avatar"
                 
                 current_section = {
-                    "timestamp": timestamp,
-                    "title": title,
+                    "timestamp": timestamp_part,
+                    "title": title_part,
                     "type": section_type,
                     "text": ""
                 }
-            elif current_section and line.strip():
+                print(f"📝 Found section: {title_part[:50]}")
+            elif current_section and line.strip() and not line.startswith('---'):
+                # Add non-empty lines to current section (skip separators like ---)
                 current_section["text"] += line + "\n"
         
         if current_section:
             sections.append(current_section)
+        
+        print(f"✅ Parsed {len(sections)} sections from script")
         
         # Format duration string
         duration_str = f"{video_duration:02d}:00"
