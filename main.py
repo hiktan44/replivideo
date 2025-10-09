@@ -28,7 +28,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-videos_db = {}
+# Persistent video database
+VIDEO_DB_FILE = Path("videos_db.json")
+
+def load_videos_db() -> Dict:
+    """Load video database from JSON file"""
+    if VIDEO_DB_FILE.exists():
+        try:
+            with open(VIDEO_DB_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_videos_db(db: Dict):
+    """Save video database to JSON file"""
+    with open(VIDEO_DB_FILE, "w") as f:
+        json.dump(db, f, indent=2)
+
+# Load existing videos on startup
+videos_db = load_videos_db()
 
 class VideoCreateRequest(BaseModel):
     url: HttpUrl
@@ -237,11 +256,13 @@ def update_progress(video_id: str, progress: int, stage: str):
     if video_id in videos_db:
         videos_db[video_id]["progress"] = progress
         videos_db[video_id]["current_stage"] = stage
+        save_videos_db(videos_db)  # Save changes to disk
 
 async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
     """Main video generation pipeline"""
     try:
         videos_db[video_id]["created_at"] = datetime.now().isoformat()
+        save_videos_db(videos_db)  # Save changes to disk
         
         update_progress(video_id, 10, "📊 Analyzing content...")
         await asyncio.sleep(1)
@@ -269,11 +290,13 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
         videos_db[video_id]["video_url"] = f"/api/videos/{video_id}/download"
         videos_db[video_id]["video_path"] = final_video
         videos_db[video_id]["completed_at"] = datetime.now().isoformat()
+        save_videos_db(videos_db)  # Save changes to disk
         
     except Exception as e:
         videos_db[video_id]["status"] = "failed"
         videos_db[video_id]["error"] = str(e)
         videos_db[video_id]["current_stage"] = f"❌ Error: {str(e)}"
+        save_videos_db(videos_db)  # Save changes to disk
 
 @app.get("/", response_class=HTMLResponse)
 async def home():
@@ -681,6 +704,7 @@ async def create_video(request: VideoCreateRequest, background_tasks: Background
         "error": None
     }
     
+    save_videos_db(videos_db)  # Save new video to disk
     background_tasks.add_task(process_video_pipeline, video_id, request)
     
     return {"video_id": video_id, "status": "processing"}
