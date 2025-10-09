@@ -78,9 +78,12 @@ class GitHubAnalyzer:
     async def analyze_repo(url: str) -> Dict:
         """Extract GitHub repository information"""
         try:
-            # Clean up URL and remove .git suffix
+            # Clean up URL and remove .git suffix only from the end
             clean_url = url.replace("https://github.com/", "").replace("http://github.com/", "")
-            clean_url = clean_url.rstrip("/").replace(".git", "")
+            clean_url = clean_url.rstrip("/")
+            # Only remove .git if it's at the end of the URL
+            if clean_url.endswith(".git"):
+                clean_url = clean_url[:-4]
             parts = clean_url.split("/")
             if len(parts) < 2:
                 raise ValueError("Invalid GitHub URL")
@@ -832,7 +835,8 @@ async def get_api_status():
             "enabled": did.enabled,
             "api_key_present": bool(getattr(did, 'api_key', None))
         }
-    except:
+    except Exception as e:
+        print(f"⚠️ Could not load D-ID service: {str(e)}")
         status["did"] = {
             "enabled": False,
             "api_key_present": False,
