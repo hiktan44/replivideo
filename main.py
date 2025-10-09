@@ -35,6 +35,7 @@ class VideoCreateRequest(BaseModel):
     avatar_type: str = "professional_female"
     voice_type: str = "tr_female_professional"
     video_style: str = "tutorial"
+    provider: str = "heygen"  # "did" or "heygen"
 
 class VideoStatusResponse(BaseModel):
     video_id: str
@@ -169,20 +170,25 @@ class TTSService:
         return audio_path
 
 class AvatarService:
-    """D-ID Avatar video rendering service"""
+    """Avatar video rendering service (supports D-ID and HeyGen)"""
     
     @staticmethod
-    async def render_avatar_segments(script: Dict, avatar_type: str, audio_file: str) -> List[str]:
-        """Render avatar video segments using D-ID API"""
+    async def render_avatar_segments(script: Dict, avatar_type: str, audio_file: str, provider: str = "heygen") -> List[str]:
+        """Render avatar video segments using selected provider API"""
         
-        from services.did_service import DIDService
+        # Select provider service
+        if provider == "heygen":
+            from services.heygen_service import HeyGenService
+            service = HeyGenService()
+        else:
+            from services.did_service import DIDService
+            service = DIDService()
         
-        did_service = DIDService()
         avatar_videos = []
         
         for section in script["sections"]:
             if section["type"] == "avatar":
-                video_path = await did_service.create_avatar_video(
+                video_path = await service.create_avatar_video(
                     text=section["text"],
                     avatar_type=avatar_type
                 )
@@ -213,8 +219,8 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
         update_progress(video_id, 45, "🎤 Creating Turkish professional voiceover...")
         audio_file = await TTSService.generate_audio(script, request.voice_type)
         
-        update_progress(video_id, 65, "🎭 Rendering avatar video segments...")
-        avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file)
+        update_progress(video_id, 65, f"🎭 Rendering avatar video segments with {request.provider.upper()}...")
+        avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file, request.provider)
         
         update_progress(video_id, 85, "🎬 Composing final video...")
         
@@ -262,7 +268,15 @@ async def home():
                         <p class="text-xs text-gray-500 mt-1">✨ Herhangi bir web sitesi URL'i girin - otomatik analiz edilecek!</p>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Avatar Sağlayıcı</label>
+                            <select id="provider" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                <option value="heygen">HeyGen (Önerilen)</option>
+                                <option value="did">D-ID</option>
+                            </select>
+                        </div>
+                        
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Avatar Tipi</label>
                             <select id="avatarType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
@@ -340,7 +354,15 @@ async def home():
                         <h3 class="text-lg font-semibold text-blue-900 mb-3">🎨 Video Düzenleme Seçenekleri</h3>
                         <p class="text-sm text-blue-700 mb-4">Farklı avatar, ses veya stil ile videoyu yeniden oluşturun</p>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Yeni Avatar Sağlayıcı</label>
+                                <select id="editProvider" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="heygen">HeyGen (Önerilen)</option>
+                                    <option value="did">D-ID</option>
+                                </select>
+                            </div>
+                            
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Yeni Avatar Tipi</label>
                                 <select id="editAvatarType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -406,7 +428,8 @@ async def home():
                 url: url,
                 avatar_type: document.getElementById('avatarType').value,
                 voice_type: document.getElementById('voiceType').value,
-                video_style: document.getElementById('videoStyle').value
+                video_style: document.getElementById('videoStyle').value,
+                provider: document.getElementById('provider').value
             };
             
             try {
@@ -471,6 +494,7 @@ async def home():
                 editOptions.classList.remove('hidden');
                 
                 // Set current values in edit fields
+                document.getElementById('editProvider').value = document.getElementById('provider').value;
                 document.getElementById('editAvatarType').value = document.getElementById('avatarType').value;
                 document.getElementById('editVoiceType').value = document.getElementById('voiceType').value;
                 document.getElementById('editVideoStyle').value = document.getElementById('videoStyle').value;
@@ -494,7 +518,8 @@ async def home():
                 url: currentVideoUrl,
                 avatar_type: document.getElementById('editAvatarType').value,
                 voice_type: document.getElementById('editVoiceType').value,
-                video_style: document.getElementById('editVideoStyle').value
+                video_style: document.getElementById('editVideoStyle').value,
+                provider: document.getElementById('editProvider').value
             };
             
             try {
