@@ -13,7 +13,7 @@ from typing import Optional, Dict, List
 class HeyGenService:
     def __init__(self):
         self.api_key = os.getenv("HEYGEN_API_KEY")
-        self.base_url = "https://api.heygen.com/v2"
+        self.base_url = "https://api.heygen.com"  # Use v1 and v2 mixed API
         
         if self.api_key:
             self.enabled = True
@@ -48,7 +48,7 @@ class HeyGenService:
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(
-                    f"{self.base_url}/voices",
+                    f"{self.base_url}/v2/voices",
                     headers=headers
                 )
                 response.raise_for_status()
@@ -139,7 +139,7 @@ class HeyGenService:
                 # Generate video
                 print(f"📤 Sending video generation request to HeyGen...")
                 response = await client.post(
-                    f"{self.base_url}/video/generate",
+                    f"{self.base_url}/v2/video/generate",
                     headers=headers,
                     json=payload
                 )
@@ -161,15 +161,16 @@ class HeyGenService:
                     await asyncio.sleep(2)  # Wait 2 seconds between checks
                     
                     status_response = await client.get(
-                        f"{self.base_url}/video_status",
+                        f"{self.base_url}/v1/video_status.get",
                         headers=headers,
                         params={"video_id": video_id}
                     )
                     status_response.raise_for_status()
                     status_data = status_response.json()
                     
-                    if status_data.get("error"):
-                        raise Exception(f"Status check error: {status_data['error']}")
+                    # V1 API returns code 100 for success
+                    if status_data.get("code") != 100:
+                        raise Exception(f"Status check error: {status_data.get('message', 'Unknown error')}")
                     
                     video_status = status_data.get("data", {}).get("status")
                     
@@ -247,7 +248,7 @@ class HeyGenService:
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(
-                    f"{self.base_url}/video_status",
+                    f"{self.base_url}/v1/video_status.get",
                     headers=headers,
                     params={"video_id": video_id}
                 )
