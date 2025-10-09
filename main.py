@@ -180,20 +180,29 @@ class AvatarService:
         if provider == "heygen":
             from services.heygen_service import HeyGenService
             service = HeyGenService()
+            print(f"🎭 Using HeyGen service (enabled: {service.enabled})")
         else:
             from services.did_service import DIDService
             service = DIDService()
+            print(f"🎭 Using D-ID service (enabled: {service.enabled})")
         
         avatar_videos = []
         
-        for section in script["sections"]:
+        for i, section in enumerate(script["sections"]):
             if section["type"] == "avatar":
-                video_path = await service.create_avatar_video(
-                    text=section["text"],
-                    avatar_type=avatar_type
-                )
-                avatar_videos.append(video_path)
+                print(f"📹 Processing section {i+1}/{len(script['sections'])}: {section.get('title', 'No title')[:50]}")
+                try:
+                    video_path = await service.create_avatar_video(
+                        text=section["text"],
+                        avatar_type=avatar_type
+                    )
+                    avatar_videos.append(video_path)
+                    print(f"✅ Section {i+1} video created: {video_path}")
+                except Exception as e:
+                    print(f"❌ Error creating avatar video for section {i+1}: {str(e)}")
+                    continue
         
+        print(f"📊 Total avatar videos created: {len(avatar_videos)}")
         return avatar_videos
 
 def update_progress(video_id: str, progress: int, stage: str):
