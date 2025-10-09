@@ -1,0 +1,797 @@
+"""
+AI Avatar Video Maker - Replit Complete Application
+10 dakikalık GitHub/Web analiz videoları oluşturur
+"""
+
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, HttpUrl
+from typing import Optional, Dict, List
+import os
+import uuid
+import json
+import asyncio
+from datetime import datetime
+import httpx
+
+# ==================== CONFIGURATION ====================
+
+app = FastAPI(title="AI Avatar Video Maker", version="1.0.0")
+
+# CORS ayarları
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# In-memory database (Replit DB ile değiştirilebilir)
+videos_db = {}
+
+# ==================== MODELS ====================
+
+class VideoCreateRequest(BaseModel):
+    url: HttpUrl
+    avatar_type: str = "professional_female"
+    voice_type: str = "tr_female_professional"
+    video_style: str = "tutorial"
+
+class VideoStatusResponse(BaseModel):
+    video_id: str
+    status: str
+    progress: int
+    current_stage: str
+    video_url: Optional[str] = None
+    youtube_url: Optional[str] = None
+    created_at: Optional[str] = None
+    completed_at: Optional[str] = None
+
+# ==================== SERVICES ====================
+
+class GitHubAnalyzer:
+    """GitHub reposu analiz servisi"""
+    
+    @staticmethod
+    async def analyze_repo(url: str) -> Dict:
+        """GitHub repo bilgilerini çeker"""
+        try:
+            # URL'den owner ve repo çıkar
+            parts = url.replace("https://github.com/", "").replace("http://github.com/", "").split("/")
+            if len(parts) < 2:
+                raise ValueError("Geçersiz GitHub URL")
+            
+            owner, repo_name = parts[0], parts[1]
+            
+            # GitHub API (token gerektirmez - public)
+            api_url = f"https://api.github.com/repos/{owner}/{repo_name}"
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.get(api_url)
+                response.raise_for_status()
+                repo_data = response.json()
+                
+                # README çek
+                try:
+                    readme_url = f"https://api.github.com/repos/{owner}/{repo_name}/readme"
+                    readme_response = await client.get(readme_url)
+                    readme_json = readme_response.json()
+                    
+                    # README content base64'ten decode et
+                    import base64
+                    readme_content = base64.b64decode(readme_json.get("content", "")).decode("utf-8")
+                except:
+                    readme_content = "README bulunamadı"
+                
+                # Diller
+                try:
+                    lang_url = f"https://api.github.com/repos/{owner}/{repo_name}/languages"
+                    lang_response = await client.get(lang_url)
+                    languages = lang_response.json()
+                except:
+                    languages = {}
+                
+                return {
+                    "name": repo_data.get("name"),
+                    "full_name": repo_data.get("full_name"),
+                    "description": repo_data.get("description", "Açıklama yok"),
+                    "language": repo_data.get("language", "Belirtilmemiş"),
+                    "stars": repo_data.get("stargazers_count", 0),
+                    "forks": repo_data.get("forks_count", 0),
+                    "watchers": repo_data.get("watchers_count", 0),
+                    "open_issues": repo_data.get("open_issues_count", 0),
+                    "topics": repo_data.get("topics", []),
+                    "created_at": repo_data.get("created_at"),
+                    "updated_at": repo_data.get("updated_at"),
+                    "homepage": repo_data.get("homepage"),
+                    "readme": readme_content[:3000],
+                    "license": repo_data.get("license", {}).get("name", "Belirtilmemiş"),
+                    "languages": languages,
+                    "owner": owner,
+                    "repo": repo_name
+                }
+        
+        except Exception as e:
+            raise Exception(f"GitHub analiz hatası: {str(e)}")
+
+class ScriptGenerator:
+    """AI ile script oluşturma servisi"""
+    
+    @staticmethod
+    async def generate_script(repo_data: Dict, style: str) -> Dict:
+        """
+        10 dakikalık Türkçe video scripti oluşturur
+        NOT: Gerçek implementasyonda Claude/GPT API kullanılacak
+        """
+        
+        # Demo script (production'da AI API kullanılacak)
+        demo_script = f"""
+[00:00-00:30] AÇILIŞ
+Merhaba! Bugün {repo_data['name']} projesini inceleyeceğiz. 
+{repo_data['description']}
+
+Bu videoda neler öğreneceksiniz?
+✓ {repo_data['name']} nedir ve nasıl çalışır
+✓ Ana özellikleri nelerdir
+✓ Nasıl kurulur ve kullanılır
+
+Hadi başlayalım!
+
+[00:30-02:00] PROJE TANITIMI
+{repo_data['name']}, {repo_data['language']} programlama diliyle yazılmış, 
+GitHub'da {repo_data['stars']} yıldıza sahip bir projedir.
+
+Proje, {repo_data['description']} amacıyla geliştirilmiştir.
+
+Bu proje özellikle şu durumlarda işinize yarayacak:
+• {repo_data['topics'][:3] if repo_data['topics'] else ['Web geliştirme', 'API entegrasyonu', 'Otomasyon']}
+
+[02:00-02:20] GEÇİŞ 1
+Şimdi ana özelliklerine detaylı bir şekilde bakalım...
+
+[02:20-05:00] ANA ÖZELLİKLER
+Özellik 1: Hızlı ve Kolay Kullanım
+{repo_data['name']} çok basit bir API'ye sahip...
+
+Özellik 2: Güçlü Performans
+Proje, optimize edilmiş kod yapısı sayesinde...
+
+Özellik 3: Geniş Topluluk Desteği
+{repo_data['forks']} fork ve aktif bir geliştirici topluluğu...
+
+[05:00-05:20] GEÇİŞ 2
+Şimdi canlı bir demo ile nasıl çalıştığını görelim...
+
+[05:20-08:00] DEMO VE KULLANIM
+Gerçek bir kullanım senaryosu üzerinden...
+
+[08:00-08:20] GEÇİŞ 3
+Kuruluma geçelim...
+
+[08:20-09:30] KURULUM
+Öncelikle gereksinimleri kontrol edin:
+• {repo_data['language']} kurulu olmalı
+• Git kurulu olmalı
+
+Kurulum adımları:
+1. Repository'yi klonlayın
+2. Bağımlılıkları yükleyin
+3. Yapılandırma dosyasını düzenleyin
+
+[09:30-10:00] KAPANIŞ
+Özetlersek, {repo_data['name']} projesi:
+✓ Kolay kullanım
+✓ Güçlü özellikler
+✓ Aktif topluluk desteği
+
+Video işinize yaradıysa beğenmeyi unutmayın!
+Sonraki videoda görüşmek üzere! 👋
+"""
+        
+        # Script'i bölümlere ayır
+        sections = []
+        current_section = None
+        
+        for line in demo_script.strip().split('\n'):
+            if line.startswith('['):
+                if current_section:
+                    sections.append(current_section)
+                
+                # Timestamp ve başlık çıkar
+                timestamp = line.split(']')[0].replace('[', '')
+                title = line.split(']')[1].strip() if ']' in line else ""
+                
+                # Avatar mı yoksa ekran kaydı mı?
+                section_type = "avatar" if any(x in title.upper() for x in ["AÇILIŞ", "GEÇİŞ", "KAPANIŞ"]) else "screen"
+                
+                current_section = {
+                    "timestamp": timestamp,
+                    "title": title,
+                    "type": section_type,
+                    "text": ""
+                }
+            elif current_section and line.strip():
+                current_section["text"] += line + "\n"
+        
+        if current_section:
+            sections.append(current_section)
+        
+        return {
+            "full_text": demo_script,
+            "sections": sections,
+            "metadata": {
+                "word_count": len(demo_script.split()),
+                "estimated_duration": "10:00",
+                "language": "tr"
+            }
+        }
+
+class TTSService:
+    """Text-to-Speech servisi"""
+    
+    @staticmethod
+    async def generate_audio(script: Dict, voice_type: str) -> str:
+        """
+        Script'ten ses dosyası oluşturur
+        NOT: Gerçek implementasyonda ElevenLabs/Azure TTS kullanılacak
+        """
+        await asyncio.sleep(2)  # Simüle edilmiş işlem
+        return f"audio_{uuid.uuid4()}.mp3"
+
+class AvatarService:
+    """Avatar video render servisi"""
+    
+    @staticmethod
+    async def render_avatar_segments(script: Dict, avatar_type: str) -> List[str]:
+        """
+        Avatar segmentlerini render eder (sadece geçiş ve açılış/kapanış için)
+        NOT: Gerçek implementasyonda D-ID API kullanılacak
+        """
+        avatar_segments = []
+        
+        for section in script["sections"]:
+            if section["type"] == "avatar":
+                await asyncio.sleep(1)  # Simüle edilmiş render
+                avatar_segments.append(f"avatar_{section['timestamp']}.mp4")
+        
+        return avatar_segments
+
+class ScreenRecorder:
+    """Ekran kaydı servisi"""
+    
+    @staticmethod
+    async def create_screen_recordings(repo_data: Dict) -> List[str]:
+        """
+        Kod gösterimleri ve demo ekran kayıtları oluşturur
+        NOT: Gerçek implementasyonda Puppeteer kullanılacak
+        """
+        recordings = []
+        
+        # Farklı ekran kayıtları oluştur
+        screens = ["code_view", "demo", "terminal", "documentation"]
+        
+        for screen in screens:
+            await asyncio.sleep(2)  # Simüle edilmiş kayıt
+            recordings.append(f"screen_{screen}.mp4")
+        
+        return recordings
+
+class VideoComposer:
+    """Video kompozisyon servisi"""
+    
+    @staticmethod
+    async def compose_video(
+        avatar_clips: List[str],
+        screen_recordings: List[str],
+        audio_file: str,
+        script: Dict
+    ) -> str:
+        """
+        Tüm parçaları birleştirip final videoyu oluşturur
+        NOT: Gerçek implementasyonda FFmpeg kullanılacak
+        """
+        await asyncio.sleep(5)  # Simüle edilmiş kompozisyon
+        return f"final_video_{uuid.uuid4()}.mp4"
+    
+    @staticmethod
+    async def add_subtitles(video_path: str, script: Dict) -> str:
+        """Alt yazı ekler"""
+        await asyncio.sleep(2)  # Simüle edilmiş işlem
+        return f"video_with_subs_{uuid.uuid4()}.mp4"
+
+class YouTubeUploader:
+    """YouTube yükleme servisi"""
+    
+    @staticmethod
+    async def upload_video(video_path: str, repo_data: Dict, script: Dict) -> str:
+        """
+        YouTube'a video yükler
+        NOT: Gerçek implementasyonda YouTube API kullanılacak
+        """
+        
+        # SEO optimized başlık oluştur
+        title = f"{repo_data['name']} Nedir? | Detaylı İnceleme ve Kullanım Rehberi | 2025"
+        
+        # Açıklama oluştur
+        description = f"""
+🎯 {repo_data['name']} hakkında bilmeniz gereken her şey!
+
+Bu videoda {repo_data['name']}'ın:
+✅ Ne olduğunu
+✅ Nasıl çalıştığını
+✅ Ana özelliklerini
+✅ Kurulum ve kullanımını
+
+detaylıca anlatıyorum.
+
+⏱️ Zaman Damgaları:
+00:00 - Giriş
+00:30 - Proje Tanıtımı
+02:20 - Ana Özellikler
+05:20 - Canlı Demo
+08:20 - Kurulum Rehberi
+09:30 - Sonuç
+
+🔗 Faydalı Linkler:
+📦 GitHub: https://github.com/{repo_data['owner']}/{repo_data['repo']}
+⭐ Yıldız: {repo_data['stars']}
+🍴 Fork: {repo_data['forks']}
+
+#{ repo_data['name']} #{repo_data['language']} #programlama #türkçe #tutorial
+"""
+        
+        await asyncio.sleep(3)  # Simüle edilmiş yükleme
+        
+        # Demo YouTube URL
+        video_id = f"demo_{uuid.uuid4().hex[:11]}"
+        return f"https://youtube.com/watch?v={video_id}"
+
+# ==================== PIPELINE ====================
+
+async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
+    """
+    Ana video üretim pipeline'ı
+    """
+    try:
+        # Video kaydını başlat
+        videos_db[video_id]["created_at"] = datetime.now().isoformat()
+        
+        # STAGE 1: URL Analizi (10%)
+        update_progress(video_id, 10, "📊 GitHub reposu analiz ediliyor...")
+        await asyncio.sleep(2)
+        repo_data = await GitHubAnalyzer.analyze_repo(str(request.url))
+        
+        # STAGE 2: Script Oluşturma (20%)
+        update_progress(video_id, 20, "✍️ AI ile 10 dakikalık script oluşturuluyor...")
+        await asyncio.sleep(3)
+        script = await ScriptGenerator.generate_script(repo_data, request.video_style)
+        
+        # STAGE 3: Ses Oluşturma (35%)
+        update_progress(video_id, 35, "🎤 Türkçe profesyonel ses oluşturuluyor...")
+        await asyncio.sleep(4)
+        audio_file = await TTSService.generate_audio(script, request.voice_type)
+        
+        # STAGE 4: Avatar Render (50%)
+        update_progress(video_id, 50, "🎭 Avatar videoları render ediliyor (2 dakika)...")
+        await asyncio.sleep(5)
+        avatar_clips = await AvatarService.render_avatar_segments(script, request.avatar_type)
+        
+        # STAGE 5: Ekran Kayıtları (65%)
+        update_progress(video_id, 65, "💻 Kod gösterimleri ve demo oluşturuluyor...")
+        await asyncio.sleep(6)
+        screen_recordings = await ScreenRecorder.create_screen_recordings(repo_data)
+        
+        # STAGE 6: Video Kompozisyonu (80%)
+        update_progress(video_id, 80, "🎬 10 dakikalık video birleştiriliyor...")
+        await asyncio.sleep(8)
+        final_video = await VideoComposer.compose_video(
+            avatar_clips,
+            screen_recordings,
+            audio_file,
+            script
+        )
+        
+        # STAGE 7: Alt Yazı Ekleme (90%)
+        update_progress(video_id, 90, "📝 Türkçe ve İngilizce alt yazılar ekleniyor...")
+        await asyncio.sleep(3)
+        video_with_subs = await VideoComposer.add_subtitles(final_video, script)
+        
+        # STAGE 8: YouTube Yükleme (95%)
+        update_progress(video_id, 95, "📺 YouTube'a yükleniyor...")
+        await asyncio.sleep(4)
+        youtube_url = await YouTubeUploader.upload_video(
+            video_with_subs,
+            repo_data,
+            script
+        )
+        
+        # TAMAMLANDI (100%)
+        videos_db[video_id].update({
+            "status": "completed",
+            "progress": 100,
+            "current_stage": "✅ Video başarıyla oluşturuldu!",
+            "video_url": video_with_subs,
+            "youtube_url": youtube_url,
+            "completed_at": datetime.now().isoformat(),
+            "repo_data": repo_data
+        })
+        
+    except Exception as e:
+        videos_db[video_id].update({
+            "status": "failed",
+            "current_stage": f"❌ Hata: {str(e)}",
+            "progress": 0
+        })
+
+def update_progress(video_id: str, progress: int, stage: str):
+    """İlerleme durumunu günceller"""
+    if video_id in videos_db:
+        videos_db[video_id]["progress"] = progress
+        videos_db[video_id]["current_stage"] = stage
+        videos_db[video_id]["status"] = "processing"
+
+# ==================== API ENDPOINTS ====================
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    """Ana sayfa - Web UI"""
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>🎬 AI Avatar Video Maker</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: .5; }
+            }
+            .animate-pulse {
+                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+        </style>
+    </head>
+    <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+        <div class="container mx-auto px-4 py-12 max-w-4xl">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="text-6xl font-bold mb-4 text-indigo-900">
+                    🎬 AI Avatar Video Maker
+                </h1>
+                <p class="text-xl text-gray-700">
+                    GitHub reposu veya web sitesi girin, 10 dakikalık profesyonel video oluşturalım!
+                </p>
+                <p class="text-sm text-gray-500 mt-2">
+                    ⚡ Otomatik analiz • 🎭 AI Avatar • 🎤 Türkçe ses • 📺 YouTube yükleme
+                </p>
+            </div>
+
+            <!-- Main Card -->
+            <div class="bg-white rounded-3xl shadow-2xl p-8 mb-8">
+                <!-- URL Input -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        🔗 GitHub Repository URL veya Web Sitesi
+                    </label>
+                    <input
+                        type="url"
+                        id="urlInput"
+                        placeholder="https://github.com/kullanici/proje"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                    />
+                </div>
+
+                <!-- Avatar Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        🎭 Avatar Tipi
+                    </label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button class="avatar-btn border-2 border-indigo-500 bg-indigo-50 rounded-xl p-4 hover:bg-indigo-100 transition" data-value="professional_female">
+                            <div class="text-4xl mb-2">👩‍💼</div>
+                            <div class="font-semibold">Profesyonel Kadın</div>
+                        </button>
+                        <button class="avatar-btn border-2 border-gray-300 rounded-xl p-4 hover:bg-gray-50 transition" data-value="professional_male">
+                            <div class="text-4xl mb-2">👨‍💼</div>
+                            <div class="font-semibold">Profesyonel Erkek</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Voice Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        🎤 Ses Tipi
+                    </label>
+                    <select id="voiceSelect" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-indigo-500">
+                        <option value="tr_female_professional">Kadın - Profesyonel</option>
+                        <option value="tr_male_professional">Erkek - Profesyonel</option>
+                        <option value="tr_female_young">Kadın - Genç & Enerjik</option>
+                        <option value="tr_male_deep">Erkek - Derin & Otoriter</option>
+                    </select>
+                </div>
+
+                <!-- Video Style -->
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        🎬 Video Stili
+                    </label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button class="style-btn border-2 border-indigo-500 bg-indigo-50 rounded-xl p-3 hover:bg-indigo-100 transition text-sm font-semibold" data-value="tutorial">
+                            📚 Tutorial
+                        </button>
+                        <button class="style-btn border-2 border-gray-300 rounded-xl p-3 hover:bg-gray-50 transition text-sm font-semibold" data-value="review">
+                            ⭐ Review
+                        </button>
+                        <button class="style-btn border-2 border-gray-300 rounded-xl p-3 hover:bg-gray-50 transition text-sm font-semibold" data-value="demo">
+                            💻 Demo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Create Button -->
+                <button
+                    id="createBtn"
+                    class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:from-indigo-700 hover:to-purple-700 transition shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    🎬 Video Oluştur (10 Dakika)
+                </button>
+            </div>
+
+            <!-- Progress Card (Hidden by default) -->
+            <div id="progressCard" class="bg-white rounded-3xl shadow-2xl p-8 hidden">
+                <h3 class="text-2xl font-bold mb-6 text-center text-indigo-900">
+                    📊 Video Oluşturuluyor...
+                </h3>
+
+                <!-- Progress Bar -->
+                <div class="mb-6">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-sm font-semibold text-gray-700">İlerleme</span>
+                        <span id="progressPercent" class="text-sm font-bold text-indigo-600">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                        <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Current Stage -->
+                <div class="bg-indigo-50 rounded-xl p-4 mb-6">
+                    <div class="flex items-center">
+                        <div class="animate-pulse mr-3 text-2xl">⏳</div>
+                        <div>
+                            <div class="text-xs text-gray-500 mb-1">Şu an:</div>
+                            <div id="currentStage" class="font-semibold text-gray-800">
+                                İşlem başlatılıyor...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estimated Time -->
+                <div class="text-center text-sm text-gray-600 mb-4">
+                    ⏱️ Tahmini Süre: <span class="font-semibold">45-60 dakika</span>
+                </div>
+
+                <!-- Result (Hidden by default) -->
+                <div id="resultSection" class="hidden space-y-3">
+                    <div class="bg-green-50 border-2 border-green-500 rounded-xl p-4 text-center">
+                        <div class="text-4xl mb-2">✅</div>
+                        <div class="font-bold text-green-900 mb-2">Video Başarıyla Oluşturuldu!</div>
+                    </div>
+                    
+                    <a id="youtubeLink" href="#" target="_blank" class="block w-full bg-red-600 text-white text-center py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition shadow-lg">
+                        📺 YouTube'da İzle
+                    </a>
+                    
+                    <button onclick="location.reload()" class="w-full bg-gray-600 text-white py-3 rounded-xl font-semibold hover:bg-gray-700 transition">
+                        🔄 Yeni Video Oluştur
+                    </button>
+                </div>
+            </div>
+
+            <!-- Info Section -->
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl p-6 shadow-lg text-center">
+                    <div class="text-4xl mb-3">⚡</div>
+                    <h3 class="font-bold text-lg mb-2">Otomatik Analiz</h3>
+                    <p class="text-sm text-gray-600">GitHub repo veya web sitesini AI ile analiz eder</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-lg text-center">
+                    <div class="text-4xl mb-3">🎭</div>
+                    <h3 class="font-bold text-lg mb-2">AI Avatar</h3>
+                    <p class="text-sm text-gray-600">Profesyonel avatar ile görsel zenginlik</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-lg text-center">
+                    <div class="text-4xl mb-3">📺</div>
+                    <h3 class="font-bold text-lg mb-2">YouTube Ready</h3>
+                    <p class="text-sm text-gray-600">SEO optimized, otomatik yükleme</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let selectedAvatar = 'professional_female';
+            let selectedStyle = 'tutorial';
+            let pollingInterval = null;
+
+            // Avatar selection
+            document.querySelectorAll('.avatar-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.avatar-btn').forEach(b => {
+                        b.classList.remove('border-indigo-500', 'bg-indigo-50');
+                        b.classList.add('border-gray-300');
+                    });
+                    btn.classList.add('border-indigo-500', 'bg-indigo-50');
+                    btn.classList.remove('border-gray-300');
+                    selectedAvatar = btn.dataset.value;
+                });
+            });
+
+            // Style selection
+            document.querySelectorAll('.style-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.style-btn').forEach(b => {
+                        b.classList.remove('border-indigo-500', 'bg-indigo-50');
+                        b.classList.add('border-gray-300');
+                    });
+                    btn.classList.add('border-indigo-500', 'bg-indigo-50');
+                    btn.classList.remove('border-gray-300');
+                    selectedStyle = btn.dataset.value;
+                });
+            });
+
+            // Create video
+            document.getElementById('createBtn').addEventListener('click', async () => {
+                const url = document.getElementById('urlInput').value;
+                const voice = document.getElementById('voiceSelect').value;
+                
+                if (!url) {
+                    alert('Lütfen bir URL girin!');
+                    return;
+                }
+
+                try {
+                    document.getElementById('createBtn').disabled = true;
+                    document.getElementById('createBtn').textContent = '⏳ İşlem Başlatılıyor...';
+
+                    const response = await fetch('/api/videos/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            url: url,
+                            avatar_type: selectedAvatar,
+                            voice_type: voice,
+                            video_style: selectedStyle
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        document.getElementById('progressCard').classList.remove('hidden');
+                        startPolling(data.video_id);
+                    } else {
+                        alert('Hata: ' + (data.detail || 'Bilinmeyen hata'));
+                        document.getElementById('createBtn').disabled = false;
+                        document.getElementById('createBtn').textContent = '🎬 Video Oluştur (10 Dakika)';
+                    }
+                } catch (error) {
+                    alert('Bağlantı hatası: ' + error.message);
+                    document.getElementById('createBtn').disabled = false;
+                    document.getElementById('createBtn').textContent = '🎬 Video Oluştur (10 Dakika)';
+                }
+            });
+
+            function startPolling(videoId) {
+                pollingInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch(`/api/videos/${videoId}`);
+                        const data = await response.json();
+
+                        document.getElementById('progressBar').style.width = data.progress + '%';
+                        document.getElementById('progressPercent').textContent = data.progress + '%';
+                        document.getElementById('currentStage').textContent = data.current_stage;
+
+                        if (data.status === 'completed') {
+                            clearInterval(pollingInterval);
+                            document.getElementById('youtubeLink').href = data.youtube_url;
+                            document.getElementById('resultSection').classList.remove('hidden');
+                        } else if (data.status === 'failed') {
+                            clearInterval(pollingInterval);
+                            alert('Video oluşturma başarısız: ' + data.current_stage);
+                        }
+                    } catch (error) {
+                        console.error('Polling error:', error);
+                    }
+                }, 3000);
+            }
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
+@app.get("/health")
+async def health_check():
+    """Sağlık kontrolü"""
+    return {
+        "status": "healthy",
+        "version": "1.0.0",
+        "videos_in_queue": len([v for v in videos_db.values() if v["status"] == "processing"]),
+        "total_videos": len(videos_db)
+    }
+
+@app.post("/api/videos/create", response_model=VideoStatusResponse)
+async def create_video(request: VideoCreateRequest, background_tasks: BackgroundTasks):
+    """Yeni video oluşturma"""
+    try:
+        video_id = str(uuid.uuid4())
+        
+        videos_db[video_id] = {
+            "video_id": video_id,
+            "url": str(request.url),
+            "avatar_type": request.avatar_type,
+            "voice_type": request.voice_type,
+            "video_style": request.video_style,
+            "status": "pending",
+            "progress": 0,
+            "current_stage": "⏳ İşlem sıraya alındı",
+            "video_url": None,
+            "youtube_url": None,
+            "created_at": None,
+            "completed_at": None
+        }
+        
+        background_tasks.add_task(process_video_pipeline, video_id, request)
+        
+        return VideoStatusResponse(**videos_db[video_id])
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/videos/{video_id}", response_model=VideoStatusResponse)
+async def get_video_status(video_id: str):
+    """Video durumu sorgulama"""
+    if video_id not in videos_db:
+        raise HTTPException(status_code=404, detail="Video bulunamadı")
+    
+    return VideoStatusResponse(**videos_db[video_id])
+
+@app.get("/api/videos")
+async def list_videos():
+    """Tüm videoları listele"""
+    return {
+        "total": len(videos_db),
+        "videos": list(videos_db.values())
+    }
+
+# ==================== MAIN ====================
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    print(f"""
+    ╔═══════════════════════════════════════════════════════════╗
+    ║                                                           ║
+    ║        🎬 AI AVATAR VIDEO MAKER - REPLIT VERSION         ║
+    ║                                                           ║
+    ║  Server: http://0.0.0.0:{port}                              ║
+    ║  Status: ✅ Running                                       ║
+    ║                                                           ║
+    ║  Endpoints:                                               ║
+    ║  • GET  /           → Web UI                             ║
+    ║  • GET  /health     → Health Check                       ║
+    ║  • POST /api/videos/create → Create Video                ║
+    ║  • GET  /api/videos/:id → Video Status                   ║
+    ║                                                           ║
+    ║  Demo Mode: Tüm servisler simüle edilmiştir             ║
+    ║  Production için API key'leri ekleyin                    ║
+    ║                                                           ║
+    ╚═══════════════════════════════════════════════════════════╝
+    """)
+    uvicorn.run(app, host="0.0.0.0", port=port)
