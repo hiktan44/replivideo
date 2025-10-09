@@ -153,8 +153,9 @@ Script'i şimdi oluştur:
         """Generate demo script when no API key is available"""
         
         content_type = content_data.get('type', 'github_repo')
+        is_github = content_type == 'github_repo'
         
-        if content_type == 'github_repo':
+        if is_github:
             topics_str = ', '.join(content_data.get('topics', [])[:3]) if content_data.get('topics') else 'web geliştirme, API entegrasyonu'
             name = content_data.get('name', 'Proje')
             description = content_data.get('description', 'Açık kaynak proje')
@@ -176,43 +177,127 @@ Script'i şimdi oluştur:
             owner = ''
             repo = ''
         
+        # Prepare dynamic text parts to avoid f-string backslash issues
+        content_label = 'projesini' if is_github else 'sitesini'
+        setup_verb = 'kurulur ve' if is_github else ''
+        section_title = 'PROJE' if is_github else 'SİTE'
+        
+        github_stars_text = f"GitHub'da {stars} yıldız almış popüler bir açık kaynak projedir." if is_github and stars > 0 else ''
+        forks_text = f"{forks} fork ile aktif bir geliştirici topluluğuna sahip." if is_github and forks > 0 else ''
+        license_text = f"Proje {license_info} lisansı altında dağıtılıyor." if is_github and license_info != 'N/A' else ''
+        
+        content_type_label = 'projenin' if is_github else 'sitenin'
+        api_or_ui = 'bir API' + chr(39) + 'ye' if is_github else 'bir arayüze'
+        integration_text = 'Birkaç satır kod ile projenize entegre edebilirsiniz.' if is_github else 'Kullanıcı dostu tasarımı ile kolayca kullanabilirsiniz.'
+        docs_text = 'Dokümantasyon oldukça kapsamlı ve örneklerle desteklenmiş.' if is_github else 'Her şey düzenli ve anlaşılır şekilde sunulmuş.'
+        
+        perf_label = 'Yüksek Performans' + (' ve Güvenilirlik' if not is_github else '')
+        perf_text = 'Proje, optimize edilmiş kod yapısı sayesinde yüksek performans sağlıyor.' if is_github else 'Site, modern teknolojilerle hızlı ve güvenilir çalışıyor.'
+        tech_text = f"{language} dilinin avantajlarından tam anlamıyla yararlanıyor." if is_github else 'Kullanıcı deneyimi her zaman öncelikli.'
+        
+        feature3_title = 'Geniş Topluluk Desteği' if is_github else 'Zengin İçerik'
+        feature3_text = f"{forks} fork ve aktif bir geliştirici topluluğu." if is_github and forks > 0 else 'Çeşitli içerikler ve kaynaklar sunuyor.'
+        
+        demo_intro = 'canlı bir demo ile' if is_github else ''
+        name_suffix1 = chr(39) + 'ın' if is_github else chr(39) + 'nin'
+        
+        demo_title = 'DEMO VE' if is_github else ''
+        name_suffix2 = chr(39) + 'ı' if is_github else chr(39) + 'yi'
+        
+        action_desc = chr(39) + 'ı kendi projenize nasıl kuracağınızı' if is_github else chr(39) + 'den nasıl en iyi şekilde faydalanacağınızı'
+        section3_title = 'KURULUM REHBERİ' if is_github else 'İPUÇLARI VE ÖNERİLER'
+        action_verb = chr(39) + 'ı kurmak' if is_github else chr(39) + 'den en iyi şekilde yararlanmak'
+        action_intro = 'Adım adım gidelim.' if is_github else 'İşte ipuçları:'
+        
+        if is_github:
+            setup_section = f"""Öncelikle sisteminizde şu gereksinimlerin olduğundan emin olun:
+• {language} kurulu olmalı
+• Git kurulu olmalı
+• İnternet bağlantısı gerekli
+
+Kurulum Adımları:
+
+1. Adım: Repository'yi klonlayın
+git clone https://github.com/{owner}/{repo}
+
+2. Adım: Proje dizinine girin
+cd {repo}
+
+3. Adım: Bağımlılıkları yükleyin
+Kullandığınız paket yöneticisine göre gerekli komutları çalıştırın.
+
+4. Adım: Yapılandırma dosyasını düzenleyin
+Kendi ihtiyaçlarınıza göre ayarları yapılandırın.
+
+5. Adım: Projeyi çalıştırın
+Artık {name}{chr(39)}ı kullanmaya başlayabilirsiniz!"""
+        else:
+            setup_section = """
+İpucu 1: Siteyi etkili kullanmak için ana menüyü keşfedin
+Tüm özellikler ve bölümler açıkça organize edilmiş.
+
+İpucu 2: Arama fonksiyonunu kullanın
+Aradığınız içeriğe hızlıca ulaşabilirsiniz.
+
+İpucu 3: Hesap oluşturun
+Daha fazla özelliğe erişmek için ücretsiz hesap oluşturabilirsiniz.
+
+İpucu 4: Mobil uygulamayı deneyin
+Mobil cihazlarınızdan da rahatça erişebilirsiniz.
+
+İpucu 5: Toplulukla etkileşime geçin
+Forum ve sosyal medya kanallarını takip edin."""
+        
+        closing_label = 'projesi' if is_github else 'sitesi'
+        closing_integration = 'entegrasyon' if is_github else 'erişim'
+        closing_perf = 'Yüksek performans' + (' ve güvenilirlik' if not is_github else '')
+        closing_feature3 = 'Aktif topluluk desteği' if is_github else 'Zengin içerik'
+        closing_feature4 = 'Sürekli güncellemeler' if is_github else 'Kullanıcı dostu arayüz'
+        closing_feature5 = 'Kapsamlı dokümantasyon' if is_github else 'Faydalı kaynaklar'
+        
+        closing_type = 'proje' if is_github else 'site'
+        closing_context = 'çalışıyorsanız' if is_github else 'ilgileniyorsanız'
+        closing_action = 'denemenizi' if is_github else 'ziyaret etmenizi'
+        
+        closing_final = f"GitHub'da {stars} yıldız alan bu projeyi siz de kullanarak projelerinize değer katabilirsiniz." if is_github and stars > 0 else 'Siz de kullanarak faydalanabilirsiniz.'
+        
         return f"""[00:00-00:30] AÇILIŞ
-Merhaba! Bugün {name} {'projesini' if content_type == 'github_repo' else 'sitesini'} detaylıca inceleyeceğiz. 
+Merhaba! Bugün {name} {content_label} detaylıca inceleyeceğiz. 
 {description}
 
 Bu videoda neler öğreneceksiniz?
 ✓ {name} nedir ve nasıl çalışır
 ✓ Ana özellikleri nelerdir
-✓ Nasıl {'kurulur ve' if content_type == 'github_repo' else ''} kullanılır
+✓ Nasıl {setup_verb} kullanılır
 
 Hadi başlayalım!
 
-[00:30-02:00] {'PROJE' if content_type == 'github_repo' else 'SİTE'} TANITIMI
+[00:30-02:00] {section_title} TANITIMI
 {name}, {description}
 
-{'GitHub\'da ' + str(stars) + ' yıldız almış popüler bir açık kaynak projedir.' if content_type == 'github_repo' and stars > 0 else ''}
+{github_stars_text}
 
-Bu {'proje' if content_type == 'github_repo' else 'site'} özellikle şu alanlarda kullanılıyor:
+Bu {closing_type} özellikle şu alanlarda kullanılıyor:
 • {topics_str}
 
-{str(forks) + ' fork ile aktif bir geliştirici topluluğuna sahip.' if content_type == 'github_repo' and forks > 0 else ''}
-{'Proje ' + license_info + ' lisansı altında dağıtılıyor.' if content_type == 'github_repo' and license_info != 'N/A' else ''}
+{forks_text}
+{license_text}
 
 [02:00-02:20] GEÇİŞ 1
-Şimdi bu {'projenin' if content_type == 'github_repo' else 'sitenin'} ana özelliklerine detaylı bir şekilde bakalım...
+Şimdi bu {content_type_label} ana özelliklerine detaylı bir şekilde bakalım...
 
 [02:20-05:00] ANA ÖZELLİKLER
 Özellik 1: Kolay Kullanım ve Entegrasyon
-{name} çok basit ve anlaşılır {'bir API\'ye' if content_type == 'github_repo' else 'bir arayüze'} sahip. 
-{'Birkaç satır kod ile projenize entegre edebilirsiniz.' if content_type == 'github_repo' else 'Kullanıcı dostu tasarımı ile kolayca kullanabilirsiniz.'}
-{'Dokümantasyon oldukça kapsamlı ve örneklerle desteklenmiş.' if content_type == 'github_repo' else 'Her şey düzenli ve anlaşılır şekilde sunulmuş.'}
+{name} çok basit ve anlaşılır {api_or_ui} sahip. 
+{integration_text}
+{docs_text}
 
-Özellik 2: Yüksek Performans {'ve Güvenilirlik' if content_type != 'github_repo' else ''}
-{'Proje, optimize edilmiş kod yapısı sayesinde yüksek performans sağlıyor.' if content_type == 'github_repo' else 'Site, modern teknolojilerle hızlı ve güvenilir çalışıyor.'}
-{language + ' dilinin avantajlarından tam anlamıyla yararlanıyor.' if content_type == 'github_repo' else 'Kullanıcı deneyimi her zaman öncelikli.'}
+Özellik 2: {perf_label}
+{perf_text}
+{tech_text}
 
-Özellik 3: {'Geniş Topluluk Desteği' if content_type == 'github_repo' else 'Zengin İçerik'}
-{str(forks) + ' fork ve aktif bir geliştirici topluluğu.' if content_type == 'github_repo' and forks > 0 else 'Çeşitli içerikler ve kaynaklar sunuyor.'}
+Özellik 3: {feature3_title}
+{feature3_text}
 Sorunlarınıza hızlı çözüm bulabilir, yeni özellikler önerebilirsiniz.
 
 Özellik 4: Sürekli Güncellemeler
@@ -220,10 +305,10 @@ Proje düzenli olarak güncelleniyor ve yeni özellikler ekleniyor.
 Güvenlik güncellemeleri hızlı bir şekilde yayınlanıyor.
 
 [05:00-05:20] GEÇİŞ 2
-Şimdi {'canlı bir demo ile' if content_type == 'github_repo' else ''} {name}{'\'ın' if content_type == 'github_repo' else '\'nin'} nasıl çalıştığını görelim...
+Şimdi {demo_intro} {name}{name_suffix1} nasıl çalıştığını görelim...
 
-[05:20-08:00] {'DEMO VE' if content_type == 'github_repo' else ''} KULLANIM
-Gerçek bir kullanım senaryosu üzerinden {name}{'\'ı' if content_type == 'github_repo' else '\'yi'} inceleyelim.
+[05:20-08:00] {demo_title} KULLANIM
+Gerçek bir kullanım senaryosu üzerinden {name}{name_suffix2} inceleyelim.
 
 Öncelikle basit bir örnek ile başlayalım.
 Bu örnekte projenin temel işlevselliğini göreceğiz.
@@ -240,58 +325,24 @@ Gördüğünüz gibi kod oldukça basit ve anlaşılır.
 Bu örnekte projenin daha ileri seviye özelliklerini kullanacağız.
 
 [08:00-08:20] GEÇİŞ 3
-Artık {name}{'\'ı kendi projenize nasıl kuracağınızı' if content_type == 'github_repo' else '\'den nasıl en iyi şekilde faydalanacağınızı'} görelim...
+Artık {name}{action_desc} görelim...
 
-[08:20-09:30] {'KURULUM REHBERİ' if content_type == 'github_repo' else 'İPUÇLARI VE ÖNERİLER'}
-{name}{'\'ı kurmak' if content_type == 'github_repo' else '\'den en iyi şekilde yararlanmak'} oldukça basit. {'Adım adım gidelim.' if content_type == 'github_repo' else 'İşte ipuçları:'}
+[08:20-09:30] {section3_title}
+{name}{action_verb} oldukça basit. {action_intro}
 
-{'''Öncelikle sisteminizde şu gereksinimlerin olduğundan emin olun:
-• ''' + language + ''' kurulu olmalı
-• Git kurulu olmalı
-• İnternet bağlantısı gerekli
-
-Kurulum Adımları:
-
-1. Adım: Repository'yi klonlayın
-git clone https://github.com/''' + owner + '''/''' + repo + '''
-
-2. Adım: Proje dizinine girin
-cd ''' + repo + '''
-
-3. Adım: Bağımlılıkları yükleyin
-Kullandığınız paket yöneticisine göre gerekli komutları çalıştırın.
-
-4. Adım: Yapılandırma dosyasını düzenleyin
-Kendi ihtiyaçlarınıza göre ayarları yapılandırın.
-
-5. Adım: Projeyi çalıştırın
-Artık ''' + name + '''\'ı kullanmaya başlayabilirsiniz!''' if content_type == 'github_repo' else '''
-İpucu 1: Siteyi etkili kullanmak için ana menüyü keşfedin
-Tüm özellikler ve bölümler açıkça organize edilmiş.
-
-İpucu 2: Arama fonksiyonunu kullanın
-Aradığınız içeriğe hızlıca ulaşabilirsiniz.
-
-İpucu 3: Hesap oluşturun
-Daha fazla özelliğe erişmek için ücretsiz hesap oluşturabilirsiniz.
-
-İpucu 4: Mobil uygulamayı deneyin
-Mobil cihazlarınızdan da rahatça erişebilirsiniz.
-
-İpucu 5: Toplulukla etkileşime geçin
-Forum ve sosyal medya kanallarını takip edin.'''}
+{setup_section}
 
 [09:30-10:00] KAPANIŞ
-Özetlersek, {name} {'projesi' if content_type == 'github_repo' else 'sitesi'}:
-✓ Kolay kullanım ve {'entegrasyon' if content_type == 'github_repo' else 'erişim'}
-✓ Yüksek performans {'ve güvenilirlik' if content_type != 'github_repo' else ''}
-✓ {'Aktif topluluk desteği' if content_type == 'github_repo' else 'Zengin içerik'}
-✓ {'Sürekli güncellemeler' if content_type == 'github_repo' else 'Kullanıcı dostu arayüz'}
-✓ {'Kapsamlı dokümantasyon' if content_type == 'github_repo' else 'Faydalı kaynaklar'}
+Özetlersek, {name} {closing_label}:
+✓ Kolay kullanım ve {closing_integration}
+✓ {closing_perf}
+✓ {closing_feature3}
+✓ {closing_feature4}
+✓ {closing_feature5}
 
-Bu {'proje' if content_type == 'github_repo' else 'site'}, {topics_str} alanlarında {'çalışıyorsanız' if content_type == 'github_repo' else 'ilgileniyorsanız'} kesinlikle {'denemenizi' if content_type == 'github_repo' else 'ziyaret etmenizi'} öneririm.
+Bu {closing_type}, {topics_str} alanlarında {closing_context} kesinlikle {closing_action} öneririm.
 
-{('GitHub\'da ' + str(stars) + ' yıldız alan bu projeyi siz de kullanarak projelerinize değer katabilirsiniz.') if content_type == 'github_repo' and stars > 0 else 'Siz de kullanarak faydalanabilirsiniz.'}
+{closing_final}
 
 Video işinize yaradıysa beğenmeyi ve abone olmayı unutmayın!
 Yorumlarda sorularınızı bekliyorum.
