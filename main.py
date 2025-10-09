@@ -445,13 +445,14 @@ async def home():
                     clearInterval(statusInterval);
                     document.getElementById('videoResult').classList.remove('hidden');
                     
-                    // Set video player source
-                    const videoUrl = status.video_url;
-                    document.getElementById('videoSource').src = videoUrl;
+                    // Set video player source (streaming endpoint for inline playback)
+                    const streamUrl = `/api/videos/${currentVideoId}/stream`;
+                    document.getElementById('videoSource').src = streamUrl;
                     document.getElementById('videoPlayer').load();
                     
-                    // Set download link
-                    document.getElementById('downloadLink').href = videoUrl;
+                    // Set download link (download endpoint with attachment header)
+                    const downloadUrl = `/api/videos/${currentVideoId}/download`;
+                    document.getElementById('downloadLink').href = downloadUrl;
                     
                 } else if (status.status === 'failed') {
                     clearInterval(statusInterval);
@@ -552,6 +553,30 @@ async def get_video_status(video_id: str):
         raise HTTPException(status_code=404, detail="Video not found")
     
     return videos_db[video_id]
+
+@app.get("/api/videos/{video_id}/stream")
+async def stream_video(video_id: str):
+    """Stream video for inline playback in browser"""
+    if video_id not in videos_db:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    video = videos_db[video_id]
+    if video["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Video not ready")
+    
+    video_path = video.get("video_path", f"videos/final_{video_id}.mp4")
+    
+    if not Path(video_path).exists():
+        raise HTTPException(status_code=404, detail="Video file not found")
+    
+    return FileResponse(
+        path=video_path,
+        media_type="video/mp4",
+        headers={
+            "Content-Disposition": "inline",
+            "Accept-Ranges": "bytes"
+        }
+    )
 
 @app.get("/api/videos/{video_id}/download")
 async def download_video(video_id: str):
