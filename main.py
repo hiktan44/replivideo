@@ -311,11 +311,68 @@ async def home():
                     </div>
                 </div>
                 
-                <div id="videoResult" class="hidden mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <p class="text-green-800 font-semibold mb-2">✅ Video başarıyla oluşturuldu!</p>
-                    <a id="downloadLink" href="#" class="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
-                        📥 Videoyu İndir
-                    </a>
+                <div id="videoResult" class="hidden mt-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <p class="text-green-800 font-semibold mb-3">✅ Video başarıyla oluşturuldu!</p>
+                        
+                        <!-- Video Player -->
+                        <div class="bg-black rounded-lg overflow-hidden mb-4">
+                            <video id="videoPlayer" controls class="w-full" controlsList="nodownload">
+                                <source id="videoSource" src="" type="video/mp4">
+                                Tarayıcınız video etiketini desteklemiyor.
+                            </video>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex gap-3 mb-4">
+                            <a id="downloadLink" href="#" download class="flex-1 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition text-center">
+                                📥 Videoyu İndir
+                            </a>
+                            <button onclick="toggleEditOptions()" class="flex-1 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                                ✏️ Düzenle
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Edit Options -->
+                    <div id="editOptions" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold text-blue-900 mb-3">🎨 Video Düzenleme Seçenekleri</h3>
+                        <p class="text-sm text-blue-700 mb-4">Farklı avatar, ses veya stil ile videoyu yeniden oluşturun</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Yeni Avatar Tipi</label>
+                                <select id="editAvatarType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="professional_female">Profesyonel Kadın</option>
+                                    <option value="professional_male">Profesyonel Erkek</option>
+                                    <option value="casual_female">Rahat Kadın</option>
+                                    <option value="casual_male">Rahat Erkek</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Yeni Ses Tipi</label>
+                                <select id="editVoiceType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="tr_female_professional">Türkçe Profesyonel Kadın</option>
+                                    <option value="tr_male_professional">Türkçe Profesyonel Erkek</option>
+                                    <option value="tr_female_friendly">Türkçe Samimi Kadın</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Yeni Video Stili</label>
+                                <select id="editVideoStyle" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="tutorial">Eğitim</option>
+                                    <option value="review">İnceleme</option>
+                                    <option value="quick_start">Hızlı Başlangıç</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button onclick="recreateVideo()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                            🔄 Yeniden Oluştur
+                        </button>
+                    </div>
                 </div>
                 
                 <div id="errorResult" class="hidden mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -327,6 +384,7 @@ async def home():
     
     <script>
         let currentVideoId = null;
+        let currentVideoUrl = null;
         let statusInterval = null;
         
         async function createVideo() {
@@ -340,6 +398,8 @@ async def home():
                 alert('Lütfen geçerli bir URL girin (http:// veya https:// ile başlamalı)');
                 return;
             }
+            
+            currentVideoUrl = url;
             
             const data = {
                 url: url,
@@ -361,6 +421,7 @@ async def home():
                 document.getElementById('videoStatus').classList.remove('hidden');
                 document.getElementById('videoResult').classList.add('hidden');
                 document.getElementById('errorResult').classList.add('hidden');
+                document.getElementById('editOptions').classList.add('hidden');
                 
                 statusInterval = setInterval(checkStatus, 2000);
                 
@@ -383,7 +444,15 @@ async def home():
                 if (status.status === 'completed') {
                     clearInterval(statusInterval);
                     document.getElementById('videoResult').classList.remove('hidden');
-                    document.getElementById('downloadLink').href = status.video_url;
+                    
+                    // Set video player source
+                    const videoUrl = status.video_url;
+                    document.getElementById('videoSource').src = videoUrl;
+                    document.getElementById('videoPlayer').load();
+                    
+                    // Set download link
+                    document.getElementById('downloadLink').href = videoUrl;
+                    
                 } else if (status.status === 'failed') {
                     clearInterval(statusInterval);
                     document.getElementById('errorResult').classList.remove('hidden');
@@ -391,6 +460,62 @@ async def home():
                 }
             } catch (error) {
                 console.error('Status check error:', error);
+            }
+        }
+        
+        function toggleEditOptions() {
+            const editOptions = document.getElementById('editOptions');
+            if (editOptions.classList.contains('hidden')) {
+                editOptions.classList.remove('hidden');
+                
+                // Set current values in edit fields
+                document.getElementById('editAvatarType').value = document.getElementById('avatarType').value;
+                document.getElementById('editVoiceType').value = document.getElementById('voiceType').value;
+                document.getElementById('editVideoStyle').value = document.getElementById('videoStyle').value;
+            } else {
+                editOptions.classList.add('hidden');
+            }
+        }
+        
+        async function recreateVideo() {
+            if (!currentVideoUrl) {
+                alert('URL bilgisi bulunamadı');
+                return;
+            }
+            
+            // Hide edit options
+            document.getElementById('editOptions').classList.add('hidden');
+            document.getElementById('videoResult').classList.add('hidden');
+            
+            // Get new values from edit fields
+            const data = {
+                url: currentVideoUrl,
+                avatar_type: document.getElementById('editAvatarType').value,
+                voice_type: document.getElementById('editVoiceType').value,
+                video_style: document.getElementById('editVideoStyle').value
+            };
+            
+            try {
+                const response = await fetch('/api/videos/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                currentVideoId = result.video_id;
+                
+                document.getElementById('videoStatus').classList.remove('hidden');
+                document.getElementById('errorResult').classList.add('hidden');
+                
+                // Reset progress
+                document.getElementById('progressBar').style.width = '0%';
+                document.getElementById('progressPercent').textContent = '0%';
+                
+                statusInterval = setInterval(checkStatus, 2000);
+                
+            } catch (error) {
+                alert('Hata: ' + error.message);
             }
         }
     </script>
