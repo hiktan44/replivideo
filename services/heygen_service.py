@@ -156,7 +156,7 @@ class HeyGenService:
                 print(f"📝 Video generation started with ID: {video_id}")
                 
                 # Poll for video status
-                max_attempts = 150  # 5 minutes max wait (150 * 2 seconds)
+                max_attempts = 300  # 10 minutes max wait (300 * 2 seconds)
                 for attempt in range(max_attempts):
                     await asyncio.sleep(2)  # Wait 2 seconds between checks
                     
@@ -167,6 +167,10 @@ class HeyGenService:
                     )
                     status_response.raise_for_status()
                     status_data = status_response.json()
+                    
+                    # Log status response for debugging
+                    if attempt % 10 == 0:  # Log every 20 seconds
+                        print(f"🔍 Status response: {json.dumps(status_data, indent=2)}")
                     
                     # V1 API returns code 100 for success
                     if status_data.get("code") != 100:
@@ -200,8 +204,13 @@ class HeyGenService:
                     elif video_status in ["failed", "error"]:
                         error_msg = status_data.get("data", {}).get("error", {}).get("message", "Unknown error")
                         raise Exception(f"Video generation failed: {error_msg}")
+                    
+                    elif video_status not in ["processing", "pending"]:
+                        # Unknown status
+                        print(f"⚠️ Unknown video status: {video_status}")
+                        print(f"   Full status data: {json.dumps(status_data, indent=2)}")
                 
-                raise Exception("Video generation timeout after 5 minutes")
+                raise Exception("Video generation timeout after 10 minutes")
                 
         except httpx.HTTPStatusError as e:
             print(f"❌ HeyGen HTTP error {e.response.status_code}: {e.response.text}")

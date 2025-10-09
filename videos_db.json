@@ -46,5 +46,28 @@
     "completed_at": "2025-10-09T19:45:58.840655",
     "error": null,
     "video_path": "videos/final_5022f2eb-5699-4144-a0cc-c8bd64c29d00.mp4"
+  },
+  "be55d71a-9c38-4552-8cb4-1dc4ea2f245a": {
+    "video_id": "be55d71a-9c38-4552-8cb4-1dc4ea2f245a",
+    "status": "completed",
+    "progress": 100,
+    "current_stage": "\u2705 Video completed successfully!",
+    "video_url": "/api/videos/be55d71a-9c38-4552-8cb4-1dc4ea2f245a/download",
+    "youtube_url": null,
+    "created_at": "2025-10-09T22:08:10.596779",
+    "completed_at": "2025-10-09T22:14:33.206903",
+    "error": null,
+    "video_path": "videos/final_be55d71a-9c38-4552-8cb4-1dc4ea2f245a.mp4"
+  },
+  "f5862886-34f4-419f-a47b-1ae3b23893e5": {
+    "video_id": "f5862886-34f4-419f-a47b-1ae3b23893e5",
+    "status": "processing",
+    "progress": 65,
+    "current_stage": "\ud83c\udfad Rendering avatar video segments with HEYGEN...",
+    "video_url": null,
+    "youtube_url": null,
+    "created_at": "2025-10-09T22:22:58.577048",
+    "completed_at": null,
+    "error": null
   }
 }
