@@ -36,6 +36,7 @@ class VideoCreateRequest(BaseModel):
     voice_type: str = "tr_female_professional"
     video_style: str = "tutorial"
     provider: str = "heygen"  # "did" or "heygen"
+    video_duration: int = 10  # 5, 10, or 15 minutes
 
 class VideoStatusResponse(BaseModel):
     video_id: str
@@ -111,13 +112,19 @@ class ScriptGenerator:
     """AI-powered script generation service"""
     
     @staticmethod
-    async def generate_script(repo_data: Dict, style: str) -> Dict:
-        """Generate 10-minute Turkish video script using AI"""
+    async def generate_script(repo_data: Dict, style: str, video_duration: int = 10) -> Dict:
+        """Generate Turkish video script using AI based on duration
+        
+        Args:
+            repo_data: Content/repository data
+            style: Video style (tutorial, review, quick_start)
+            video_duration: Video duration in minutes (5, 10, or 15)
+        """
         
         from services.ai_service import AIService
         
         ai_service = AIService()
-        script_text = await ai_service.generate_turkish_script(repo_data, style)
+        script_text = await ai_service.generate_turkish_script(repo_data, style, video_duration)
         
         sections = []
         current_section = None
@@ -145,12 +152,15 @@ class ScriptGenerator:
         if current_section:
             sections.append(current_section)
         
+        # Format duration string
+        duration_str = f"{video_duration:02d}:00"
+        
         return {
             "full_text": script_text,
             "sections": sections,
             "metadata": {
                 "word_count": len(script_text.split()),
-                "estimated_duration": "10:00",
+                "estimated_duration": duration_str,
                 "language": "tr"
             }
         }
@@ -222,8 +232,8 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
         from services.website_analyzer import ContentAnalyzer
         repo_data = await ContentAnalyzer.analyze_url(str(request.url))
         
-        update_progress(video_id, 25, "✍️ Generating 10-minute Turkish script with AI...")
-        script = await ScriptGenerator.generate_script(repo_data, request.video_style)
+        update_progress(video_id, 25, f"✍️ Generating {request.video_duration}-minute Turkish script with AI...")
+        script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration)
         
         update_progress(video_id, 45, "🎤 Creating Turkish professional voiceover...")
         audio_file = await TTSService.generate_audio(script, request.voice_type)
@@ -264,7 +274,18 @@ async def home():
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-4xl mx-auto">
             <h1 class="text-4xl font-bold text-center mb-2 text-purple-900">🎬 AI Avatar Video Maker</h1>
-            <p class="text-center text-gray-600 mb-8">Herhangi bir web sitesi veya GitHub projesinden otomatik 10 dakikalık Türkçe eğitim videoları oluşturun</p>
+            <p class="text-center text-gray-600 mb-4">Herhangi bir web sitesi veya GitHub projesinden otomatik Türkçe eğitim videoları oluşturun</p>
+            
+            <!-- API Status Indicator -->
+            <div id="apiStatus" class="mb-6 bg-white rounded-lg shadow-md p-4">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">🔌 API Durumu</h3>
+                <div id="statusIndicators" class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <div class="flex items-center"><span class="w-2 h-2 bg-gray-300 rounded-full mr-2"></span> AI: Kontrol ediliyor...</div>
+                    <div class="flex items-center"><span class="w-2 h-2 bg-gray-300 rounded-full mr-2"></span> Ses: Kontrol ediliyor...</div>
+                    <div class="flex items-center"><span class="w-2 h-2 bg-gray-300 rounded-full mr-2"></span> Avatar: Kontrol ediliyor...</div>
+                    <div class="flex items-center"><span class="w-2 h-2 bg-gray-300 rounded-full mr-2"></span> Genel: Kontrol ediliyor...</div>
+                </div>
+            </div>
             
             <div class="bg-white rounded-lg shadow-xl p-6 mb-6">
                 <h2 class="text-2xl font-semibold mb-4">Yeni Video Oluştur</h2>
@@ -277,7 +298,16 @@ async def home():
                         <p class="text-xs text-gray-500 mt-1">✨ Herhangi bir web sitesi URL'i girin - otomatik analiz edilecek!</p>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Video Süresi</label>
+                            <select id="videoDuration" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                <option value="5">5 Dakika (Hızlı)</option>
+                                <option value="10" selected>10 Dakika (Normal)</option>
+                                <option value="15">15 Dakika (Detaylı)</option>
+                            </select>
+                        </div>
+                        
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Avatar Sağlayıcı</label>
                             <select id="provider" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
@@ -363,7 +393,16 @@ async def home():
                         <h3 class="text-lg font-semibold text-blue-900 mb-3">🎨 Video Düzenleme Seçenekleri</h3>
                         <p class="text-sm text-blue-700 mb-4">Farklı avatar, ses veya stil ile videoyu yeniden oluşturun</p>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Yeni Video Süresi</label>
+                                <select id="editVideoDuration" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="5">5 Dakika (Hızlı)</option>
+                                    <option value="10">10 Dakika (Normal)</option>
+                                    <option value="15">15 Dakika (Detaylı)</option>
+                                </select>
+                            </div>
+                            
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Yeni Avatar Sağlayıcı</label>
                                 <select id="editProvider" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -419,6 +458,51 @@ async def home():
         let currentVideoUrl = null;
         let statusInterval = null;
         
+        // Check API status on page load
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+                
+                const indicators = document.getElementById('statusIndicators');
+                indicators.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="w-2 h-2 ${status.overall.ai_available ? 'bg-green-400' : 'bg-red-400'} rounded-full mr-2"></span> 
+                        AI: ${status.overall.ai_available ? 'Aktif' : 'İnaktif'}
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-2 h-2 ${status.elevenlabs.enabled ? 'bg-green-400' : 'bg-red-400'} rounded-full mr-2"></span> 
+                        Ses: ${status.elevenlabs.enabled ? 'Aktif' : 'İnaktif'} ${status.elevenlabs.note ? '⚠️' : ''}
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-2 h-2 ${status.overall.avatar_available ? 'bg-green-400' : 'bg-red-400'} rounded-full mr-2"></span> 
+                        Avatar: ${status.overall.avatar_available ? 'Aktif' : 'İnaktif'}
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-2 h-2 ${status.overall.ready ? 'bg-green-400' : 'bg-red-400'} rounded-full mr-2"></span> 
+                        Genel: ${status.overall.ready ? 'Hazır' : 'Hazır Değil'}
+                    </div>
+                `;
+                
+                // Update provider options based on availability
+                const providerSelect = document.getElementById('provider');
+                const editProviderSelect = document.getElementById('editProvider');
+                
+                if (status.heygen.enabled && !status.did.enabled) {
+                    providerSelect.value = 'heygen';
+                    editProviderSelect.value = 'heygen';
+                } else if (!status.heygen.enabled && status.did.enabled) {
+                    providerSelect.value = 'did';
+                    editProviderSelect.value = 'did';
+                }
+            } catch (error) {
+                console.error('API status check failed:', error);
+            }
+        }
+        
+        // Call on page load
+        window.addEventListener('DOMContentLoaded', checkApiStatus);
+        
         async function createVideo() {
             const url = document.getElementById('githubUrl').value;
             if (!url) {
@@ -438,7 +522,8 @@ async def home():
                 avatar_type: document.getElementById('avatarType').value,
                 voice_type: document.getElementById('voiceType').value,
                 video_style: document.getElementById('videoStyle').value,
-                provider: document.getElementById('provider').value
+                provider: document.getElementById('provider').value,
+                video_duration: parseInt(document.getElementById('videoDuration').value)
             };
             
             try {
@@ -503,6 +588,7 @@ async def home():
                 editOptions.classList.remove('hidden');
                 
                 // Set current values in edit fields
+                document.getElementById('editVideoDuration').value = document.getElementById('videoDuration').value;
                 document.getElementById('editProvider').value = document.getElementById('provider').value;
                 document.getElementById('editAvatarType').value = document.getElementById('avatarType').value;
                 document.getElementById('editVoiceType').value = document.getElementById('voiceType').value;
@@ -528,7 +614,8 @@ async def home():
                 avatar_type: document.getElementById('editAvatarType').value,
                 voice_type: document.getElementById('editVoiceType').value,
                 video_style: document.getElementById('editVideoStyle').value,
-                provider: document.getElementById('editProvider').value
+                provider: document.getElementById('editProvider').value,
+                video_duration: parseInt(document.getElementById('editVideoDuration').value)
             };
             
             try {
@@ -633,6 +720,71 @@ async def download_video(video_id: str):
         media_type="video/mp4",
         filename=f"github_video_{video_id}.mp4"
     )
+
+@app.get("/api/status")
+async def get_api_status():
+    """Check status of all API services"""
+    status = {}
+    
+    # Check OpenAI
+    from services.ai_service import AIService
+    ai_service = AIService()
+    status["openai"] = {
+        "enabled": ai_service.provider == "openai",
+        "api_key_present": bool(ai_service.openai_key)
+    }
+    
+    # Check Anthropic
+    status["anthropic"] = {
+        "enabled": ai_service.provider == "anthropic",
+        "api_key_present": bool(ai_service.anthropic_key)
+    }
+    
+    # Check ElevenLabs
+    from services.elevenlabs_service import ElevenLabsService
+    elevenlabs = ElevenLabsService()
+    status["elevenlabs"] = {
+        "enabled": elevenlabs.enabled,
+        "api_key_present": bool(elevenlabs.api_key),
+        "note": "Quota may be limited - only 2204 credits remaining"
+    }
+    
+    # Check HeyGen
+    from services.heygen_service import HeyGenService
+    heygen = HeyGenService()
+    status["heygen"] = {
+        "enabled": heygen.enabled,
+        "api_key_present": bool(heygen.api_key),
+        "avatars_available": len(heygen.avatars),
+        "note": "Service enabled but may have issues creating videos"
+    }
+    
+    # Check D-ID (optional service)
+    try:
+        from services.did_service import DIDService
+        did = DIDService()
+        status["did"] = {
+            "enabled": did.enabled,
+            "api_key_present": bool(getattr(did, 'api_key', None))
+        }
+    except:
+        status["did"] = {
+            "enabled": False,
+            "api_key_present": False,
+            "note": "Service not configured"
+        }
+    
+    # Overall status
+    status["overall"] = {
+        "ai_available": status["openai"]["enabled"] or status["anthropic"]["enabled"],
+        "tts_available": status["elevenlabs"]["enabled"],
+        "avatar_available": status["heygen"]["enabled"] or status.get("did", {}).get("enabled", False),
+        "ready": ((status["openai"]["enabled"] or status["anthropic"]["enabled"]) and 
+                  status["elevenlabs"]["enabled"] and 
+                  (status["heygen"]["enabled"] or status.get("did", {}).get("enabled", False)))
+    }
+    
+    return status
 
 if __name__ == "__main__":
     import uvicorn

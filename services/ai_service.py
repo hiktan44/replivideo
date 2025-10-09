@@ -22,19 +22,64 @@ class AIService:
         else:
             self.provider = "demo"
     
-    async def generate_turkish_script(self, content_data: Dict, style: str) -> str:
-        """Generate a 10-minute Turkish video script"""
+    async def generate_turkish_script(self, content_data: Dict, style: str, video_duration: int = 10) -> str:
+        """Generate Turkish video script based on duration
+        
+        Args:
+            content_data: Content/repository data
+            style: Video style (tutorial, review, quick_start)
+            video_duration: Video duration in minutes (5, 10, or 15)
+        """
         
         if self.provider == "demo":
-            return self._generate_demo_script(content_data)
+            return self._generate_demo_script(content_data, video_duration)
         
         # Determine content type and build appropriate prompt
         content_type = content_data.get('type', 'github_repo')
         
+        # Duration-specific configurations
+        duration_configs = {
+            5: {
+                "word_range": "750-900",
+                "structure": """   [00:00-00:20] AÇILIŞ - Projeyi tanıt
+   [00:20-01:30] PROJE TANITIMI - Temel özellikleri açıkla
+   [01:30-03:00] ANA ÖZELLİKLER - 2-3 ana özellik
+   [03:00-04:30] KULLANIM ÖRNEĞİ - Hızlı demo
+   [04:30-05:00] KAPANIŞ - Özet ve vedalaşma"""
+            },
+            10: {
+                "word_range": "1500-1800",
+                "structure": """   [00:00-00:30] AÇILIŞ - Projeyi tanıt, ne öğreneceklerini söyle
+   [00:30-02:00] PROJE TANITIMI - Detaylı açıklama
+   [02:00-02:20] GEÇİŞ 1 - Özelliklere geçiş
+   [02:20-05:00] ANA ÖZELLİKLER - 3-4 ana özellik detaylı
+   [05:00-05:20] GEÇİŞ 2 - Demo'ya geçiş
+   [05:20-08:00] DEMO VE KULLANIM - Pratik örnekler
+   [08:00-08:20] GEÇİŞ 3 - Kuruluma geçiş
+   [08:20-09:30] KURULUM REHBERİ - Adım adım kurulum
+   [09:30-10:00] KAPANIŞ - Özet ve vedalaşma"""
+            },
+            15: {
+                "word_range": "2250-2700",
+                "structure": """   [00:00-00:30] AÇILIŞ - Projeyi tanıt, ne öğreneceklerini söyle
+   [00:30-02:30] PROJE TANITIMI - Detaylı açıklama ve arka plan
+   [02:30-03:00] GEÇİŞ 1 - Özelliklere geçiş
+   [03:00-06:30] ANA ÖZELLİKLER - 4-5 ana özellik çok detaylı
+   [06:30-07:00] GEÇİŞ 2 - Demo'ya geçiş
+   [07:00-11:00] DEMO VE KULLANIM - Kapsamlı örnekler ve senaryolar
+   [11:00-11:30] GEÇİŞ 3 - Kurulum ve ileri konulara geçiş
+   [11:30-13:30] KURULUM VE İLERİ KONULAR - Detaylı kurulum ve optimizasyon
+   [13:30-14:30] TOPLULUK VE KAYNAKLAR - Dokümantasyon, topluluk desteği
+   [14:30-15:00] KAPANIŞ - Kapsamlı özet ve sonraki adımlar"""
+            }
+        }
+        
+        config = duration_configs.get(video_duration, duration_configs[10])
+        
         if content_type == 'github_repo':
             # GitHub repository prompt
             prompt = f"""
-GitHub projesi için 10 dakikalık Türkçe eğitim videosu scripti oluştur.
+GitHub projesi için {video_duration} dakikalık Türkçe eğitim videosu scripti oluştur.
 
 Proje Bilgileri:
 - İsim: {content_data.get('name', 'Bilinmiyor')}
@@ -49,19 +94,11 @@ README Özeti:
 {content_data.get('readme', 'README bulunamadı')[:1500]}
 
 Gereksinimler:
-1. Toplam süre: Tam 10 dakika (yaklaşık 1500-1800 kelime)
+1. Toplam süre: Tam {video_duration} dakika (yaklaşık {config['word_range']} kelime)
 2. Dil: Türkçe, profesyonel ama samimi
 3. Stil: {style} (tutorial/review/quick_start)
 4. Yapı:
-   [00:00-00:30] AÇILIŞ - Projeyi tanıt, ne öğreneceklerini söyle
-   [00:30-02:00] PROJE TANITIMI - Detaylı açıklama
-   [02:00-02:20] GEÇİŞ 1 - Özelliklere geçiş
-   [02:20-05:00] ANA ÖZELLİKLER - 3-4 ana özellik detaylı
-   [05:00-05:20] GEÇİŞ 2 - Demo'ya geçiş
-   [05:20-08:00] DEMO VE KULLANIM - Pratik örnekler
-   [08:00-08:20] GEÇİŞ 3 - Kuruluma geçiş
-   [08:20-09:30] KURULUM REHBERİ - Adım adım kurulum
-   [09:30-10:00] KAPANIŞ - Özet ve vedalaşma
+{config['structure']}
 
 5. Her bölüm başlangıcında [timestamp] BAŞLIK formatında yaz
 6. AÇILIŞ, GEÇİŞ ve KAPANIŞ bölümleri avatar ile çekilecek
@@ -80,8 +117,11 @@ Script'i şimdi oluştur:
             headings = content_data.get('headings', [])
             headings_text = '\n'.join([f"- {h.get('text', '')}" for h in headings[:10]])
             
+            # Use same structure for websites
+            website_structure = config['structure'].replace('PROJE TANITIMI', 'SİTE TANITIMI').replace('Projeyi tanıt', 'Web sitesini tanıt')
+            
             prompt = f"""
-Bir web sitesi hakkında 10 dakikalık Türkçe eğitim/tanıtım videosu scripti oluştur.
+Bir web sitesi hakkında {video_duration} dakikalık Türkçe eğitim/tanıtım videosu scripti oluştur.
 
 Web Sitesi Bilgileri:
 - Başlık: {title}
@@ -95,19 +135,11 @@ Ana Başlıklar:
 {main_content}
 
 Gereksinimler:
-1. Toplam süre: Tam 10 dakika (yaklaşık 1500-1800 kelime)
+1. Toplam süre: Tam {video_duration} dakika (yaklaşık {config['word_range']} kelime)
 2. Dil: Türkçe, profesyonel ama samimi
 3. Stil: {style} (tutorial/review/quick_start)
 4. Yapı:
-   [00:00-00:30] AÇILIŞ - Web sitesini tanıt, ne öğreneceklerini söyle
-   [00:30-02:00] SİTE TANITIMI - Detaylı açıklama, ne yapıyor, kimler kullanıyor
-   [02:00-02:20] GEÇİŞ 1 - Ana özelliklere geçiş
-   [02:20-05:00] ANA ÖZELLİKLER - Web sitesinin 3-4 ana özelliği detaylı
-   [05:00-05:20] GEÇİŞ 2 - Kullanıma geçiş
-   [05:20-08:00] KULLANIM VE ÖRNEKLERİ - Nasıl kullanılır, pratik örnekler
-   [08:00-08:20] GEÇİŞ 3 - İpuçlarına geçiş
-   [08:20-09:30] İPUÇLARI VE ÖNERİLER - Faydalı ipuçları, püf noktalar
-   [09:30-10:00] KAPANIŞ - Özet ve vedalaşma
+{website_structure}
 
 5. Her bölüm başlangıcında [timestamp] BAŞLIK formatında yaz
 6. AÇILIŞ, GEÇİŞ ve KAPANIŞ bölümleri avatar ile çekilecek
@@ -119,7 +151,25 @@ Gereksinimler:
 Script'i şimdi oluştur:
 """
         
-        if self.provider == "openai":
+        if self.provider == "anthropic":
+            # Claude'u öncelikli olarak kullan
+            response = await self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=2500,
+                temperature=0.7,
+                system="Sen profesyonel Türkçe video scripti yazan bir AI asistanısın. Eğitici, samimi ve akıcı scriptler yazarsın.",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            # Claude response'u düzgün şekilde al
+            if response.content and len(response.content) > 0:
+                text_content = response.content[0].text if hasattr(response.content[0], 'text') else str(response.content[0])
+                return text_content
+            return self._generate_demo_script(content_data, video_duration)
+            
+        elif self.provider == "openai":
+            # OpenAI'ı yedek olarak kullan
             response = await self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
@@ -130,27 +180,17 @@ Script'i şimdi oluştur:
                 max_tokens=2500
             )
             content = response.choices[0].message.content
-            return content if content else self._generate_demo_script(content_data)
-        
-        elif self.provider == "anthropic":
-            response = await self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2500,
-                temperature=0.7,
-                system="Sen profesyonel Türkçe video scripti yazan bir AI asistanısın. Eğitici, samimi ve akıcı scriptler yazarsın.",
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            for block in response.content:
-                if hasattr(block, 'text'):
-                    return block.text
-            return self._generate_demo_script(content_data)
+            return content if content else self._generate_demo_script(content_data, video_duration)
         
         return self._generate_demo_script(content_data)
     
-    def _generate_demo_script(self, content_data: Dict) -> str:
-        """Generate demo script when no API key is available"""
+    def _generate_demo_script(self, content_data: Dict, video_duration: int = 10) -> str:
+        """Generate demo script when no API key is available
+        
+        Args:
+            content_data: Content/repository data
+            video_duration: Video duration in minutes (5, 10, or 15)
+        """
         
         content_type = content_data.get('type', 'github_repo')
         is_github = content_type == 'github_repo'
