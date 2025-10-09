@@ -197,15 +197,16 @@ class HeyGenService:
                         print(f"✅ HeyGen avatar video created: {video_path}")
                         return video_path
                     
-                    elif video_status == "processing":
+                    elif video_status in ["processing", "waiting"]:
                         if attempt % 5 == 0:  # Print status every 10 seconds
-                            print(f"⏳ Video still processing... ({attempt * 2}s elapsed)")
+                            status_text = "queued, waiting to process" if video_status == "waiting" else "processing"
+                            print(f"⏳ Video {status_text}... ({attempt * 2}s elapsed)")
                     
                     elif video_status in ["failed", "error"]:
                         error_msg = status_data.get("data", {}).get("error", {}).get("message", "Unknown error")
                         raise Exception(f"Video generation failed: {error_msg}")
                     
-                    elif video_status not in ["processing", "pending"]:
+                    elif video_status not in ["processing", "pending", "waiting"]:
                         # Unknown status
                         print(f"⚠️ Unknown video status: {video_status}")
                         print(f"   Full status data: {json.dumps(status_data, indent=2)}")

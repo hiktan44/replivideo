@@ -1,0 +1,289 @@
+attached_assets/screenshot-1760041270786.png:1  GET https://replit.com/@hikmet044/attached_assets/screenshot-1760041270786.png 404 (Not Found)
+Image
+_ @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+oq @ framework-bbfe8517ae58b3f4.js:1
+oQ @ framework-bbfe8517ae58b3f4.js:1
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+RepliVideo:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+1588-f3bf62a375085e29.js:1 Uncaught (in promise) Error: Cannot notify while not connected
+    at t.stage (1588-f3bf62a375085e29.js:1:89643)
+    at e.<anonymous> (1588-f3bf62a375085e29.js:1:25924)
+    at Object.next (main-0642fa3b62e94de1.js:1:192963)
+    at n (main-0642fa3b62e94de1.js:1:59305)
+    at u (main-0642fa3b62e94de1.js:1:59502)
+t.stage @ 1588-f3bf62a375085e29.js:1
+(anonim) @ 1588-f3bf62a375085e29.js:1
+(anonim) @ main-0642fa3b62e94de1.js:1
+n @ main-0642fa3b62e94de1.js:1
+u @ main-0642fa3b62e94de1.js:1
+Promise.then
+n @ main-0642fa3b62e94de1.js:1
+u @ main-0642fa3b62e94de1.js:1
+(anonim) @ main-0642fa3b62e94de1.js:1
+(anonim) @ main-0642fa3b62e94de1.js:1
+t.update @ 1588-f3bf62a375085e29.js:1
+(anonim) @ 7564-22e15c7975c20693.js:1
+handleStopClick @ 7564-22e15c7975c20693.js:1
+(anonim) @ _app-3e746a0ad2e37f19.js:4
+(anonim) @ _app-3e746a0ad2e37f19.js:4
+onClick @ _app-3e746a0ad2e37f19.js:4
+(anonim) @ _app-3e746a0ad2e37f19.js:4
+eB @ framework-bbfe8517ae58b3f4.js:1
+eH @ framework-bbfe8517ae58b3f4.js:1
+(anonim) @ framework-bbfe8517ae58b3f4.js:1
+re @ framework-bbfe8517ae58b3f4.js:1
+rt @ framework-bbfe8517ae58b3f4.js:1
+(anonim) @ framework-bbfe8517ae58b3f4.js:1
+uT @ framework-bbfe8517ae58b3f4.js:1
+eM @ framework-bbfe8517ae58b3f4.js:1
+ru @ framework-bbfe8517ae58b3f4.js:1
+tB @ framework-bbfe8517ae58b3f4.js:1
+tD @ framework-bbfe8517ae58b3f4.js:1
+n @ _app-3e746a0ad2e37f19.js:28
