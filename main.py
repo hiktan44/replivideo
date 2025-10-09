@@ -5,7 +5,7 @@ Generates 10-minute Turkish tutorial videos from GitHub repositories
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, HttpUrl
 from typing import Optional, Dict, List
@@ -30,6 +30,7 @@ app.add_middleware(
 
 # Persistent video database
 VIDEO_DB_FILE = Path("videos_db.json")
+db_lock = asyncio.Lock()  # Thread safety for videos_db access
 
 def load_videos_db() -> Dict:
     """Load video database from JSON file"""
@@ -37,14 +38,16 @@ def load_videos_db() -> Dict:
         try:
             with open(VIDEO_DB_FILE, "r") as f:
                 return json.load(f)
-        except:
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"⚠️ Error loading videos database: {str(e)}")
             return {}
     return {}
 
-def save_videos_db(db: Dict):
-    """Save video database to JSON file"""
-    with open(VIDEO_DB_FILE, "w") as f:
-        json.dump(db, f, indent=2)
+async def save_videos_db(db: Dict):
+    """Save video database to JSON file with thread safety"""
+    async with db_lock:
+        with open(VIDEO_DB_FILE, "w") as f:
+            json.dump(db, f, indent=2)
 
 # Load existing videos on startup
 videos_db = load_videos_db()
@@ -75,7 +78,10 @@ class GitHubAnalyzer:
     async def analyze_repo(url: str) -> Dict:
         """Extract GitHub repository information"""
         try:
-            parts = url.replace("https://github.com/", "").replace("http://github.com/", "").split("/")
+            # Clean up URL and remove .git suffix
+            clean_url = url.replace("https://github.com/", "").replace("http://github.com/", "")
+            clean_url = clean_url.rstrip("/").replace(".git", "")
+            parts = clean_url.split("/")
             if len(parts) < 2:
                 raise ValueError("Invalid GitHub URL")
             
@@ -93,16 +99,16 @@ class GitHubAnalyzer:
                     readme_response = await client.get(readme_url)
                     readme_json = readme_response.json()
                     readme_content = base64.b64decode(readme_json.get("content", "")).decode("utf-8")
-                except:
-                    pass
+                except Exception as e:
+                    print(f"⚠️ Could not fetch README: {str(e)}")
                 
                 languages = {}
                 try:
                     lang_url = f"https://api.github.com/repos/{owner}/{repo_name}/languages"
                     lang_response = await client.get(lang_url)
                     languages = lang_response.json()
-                except:
-                    pass
+                except Exception as e:
+                    print(f"⚠️ Could not fetch languages: {str(e)}")
                 
                 return {
                     "name": repo_data.get("name"),
@@ -186,6 +192,16 @@ class ScriptGenerator:
         if current_section:
             sections.append(current_section)
         
+        # If no sections were parsed, create a single default section with all text
+        if not sections and script_text.strip():
+            print("⚠️ No sections found in script, creating default section")
+            sections = [{
+                "timestamp": "00:00",
+                "title": "Video Content",
+                "type": "avatar",
+                "text": script_text
+            }]
+        
         print(f"✅ Parsed {len(sections)} sections from script")
         
         # Format duration string
@@ -251,52 +267,60 @@ class AvatarService:
         print(f"📊 Total avatar videos created: {len(avatar_videos)}")
         return avatar_videos
 
-def update_progress(video_id: str, progress: int, stage: str):
+async def update_progress(video_id: str, progress: int, stage: str):
     """Update video processing progress"""
     if video_id in videos_db:
         videos_db[video_id]["progress"] = progress
         videos_db[video_id]["current_stage"] = stage
-        save_videos_db(videos_db)  # Save changes to disk
+        await save_videos_db(videos_db)  # Save changes to disk
 
 async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
     """Main video generation pipeline"""
     try:
         videos_db[video_id]["created_at"] = datetime.now().isoformat()
-        save_videos_db(videos_db)  # Save changes to disk
+        await save_videos_db(videos_db)  # Save changes to disk
         
-        update_progress(video_id, 10, "📊 Analyzing content...")
+        await update_progress(video_id, 10, "📊 Analyzing content...")
         await asyncio.sleep(1)
         
         from services.website_analyzer import ContentAnalyzer
         repo_data = await ContentAnalyzer.analyze_url(str(request.url))
         
-        update_progress(video_id, 25, f"✍️ Generating {request.video_duration}-minute Turkish script with AI...")
+        await update_progress(video_id, 25, f"✍️ Generating {request.video_duration}-minute Turkish script with AI...")
         script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration)
         
-        update_progress(video_id, 45, "🎤 Creating Turkish professional voiceover...")
+        await update_progress(video_id, 45, "🎤 Creating Turkish professional voiceover...")
         audio_file = await TTSService.generate_audio(script, request.voice_type)
         
-        update_progress(video_id, 65, f"🎭 Rendering avatar video segments with {request.provider.upper()}...")
+        await update_progress(video_id, 65, f"🎭 Rendering avatar video segments with {request.provider.upper()}...")
         avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file, request.provider)
         
-        update_progress(video_id, 85, "🎬 Composing final video...")
+        await update_progress(video_id, 85, "🎬 Composing final video...")
         
         from services.video_composer import VideoComposer
         composer = VideoComposer()
         final_video = await composer.compose_video(avatar_videos, audio_file, video_id)
         
-        update_progress(video_id, 100, "✅ Video completed successfully!")
+        await update_progress(video_id, 100, "✅ Video completed successfully!")
         videos_db[video_id]["status"] = "completed"
         videos_db[video_id]["video_url"] = f"/api/videos/{video_id}/download"
         videos_db[video_id]["video_path"] = final_video
         videos_db[video_id]["completed_at"] = datetime.now().isoformat()
-        save_videos_db(videos_db)  # Save changes to disk
+        await save_videos_db(videos_db)  # Save changes to disk
         
     except Exception as e:
+        # Sanitize error message to prevent information disclosure
+        error_msg = "Video işleme sırasında bir hata oluştu"
+        if "timeout" in str(e).lower():
+            error_msg = "Video oluşturma zaman aşımına uğradı"
+        elif "api" in str(e).lower():
+            error_msg = "API servisi ile bağlantı kurulamadı"
+        
         videos_db[video_id]["status"] = "failed"
-        videos_db[video_id]["error"] = str(e)
-        videos_db[video_id]["current_stage"] = f"❌ Error: {str(e)}"
-        save_videos_db(videos_db)  # Save changes to disk
+        videos_db[video_id]["error"] = error_msg
+        videos_db[video_id]["current_stage"] = f"❌ Hata: {error_msg}"
+        print(f"❌ Pipeline error for {video_id}: {str(e)}")  # Log actual error
+        await save_videos_db(videos_db)  # Save changes to disk
 
 @app.get("/", response_class=HTMLResponse)
 async def home():
@@ -704,7 +728,7 @@ async def create_video(request: VideoCreateRequest, background_tasks: Background
         "error": None
     }
     
-    save_videos_db(videos_db)  # Save new video to disk
+    await save_videos_db(videos_db)  # Save new video to disk
     background_tasks.add_task(process_video_pipeline, video_id, request)
     
     return {"video_id": video_id, "status": "processing"}
@@ -826,6 +850,17 @@ async def get_api_status():
     }
     
     return status
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Return a simple favicon to prevent 404 errors"""
+    # Return a minimal valid ICO file (16x16 transparent)
+    ico_bytes = bytes([
+        0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x10, 0x10,
+        0x00, 0x00, 0x01, 0x00, 0x20, 0x00, 0x68, 0x04,
+        0x00, 0x00, 0x16, 0x00, 0x00, 0x00
+    ])
+    return Response(content=ico_bytes, media_type="image/x-icon")
 
 if __name__ == "__main__":
     import uvicorn

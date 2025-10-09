@@ -156,7 +156,7 @@ class HeyGenService:
                 print(f"📝 Video generation started with ID: {video_id}")
                 
                 # Poll for video status
-                max_attempts = 60  # 2 minutes max wait
+                max_attempts = 150  # 5 minutes max wait (150 * 2 seconds)
                 for attempt in range(max_attempts):
                     await asyncio.sleep(2)  # Wait 2 seconds between checks
                     
@@ -201,7 +201,7 @@ class HeyGenService:
                         error_msg = status_data.get("data", {}).get("error", {}).get("message", "Unknown error")
                         raise Exception(f"Video generation failed: {error_msg}")
                 
-                raise Exception("Video generation timeout after 2 minutes")
+                raise Exception("Video generation timeout after 5 minutes")
                 
         except httpx.HTTPStatusError as e:
             print(f"❌ HeyGen HTTP error {e.response.status_code}: {e.response.text}")
