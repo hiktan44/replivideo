@@ -8,7 +8,17 @@ The application provides a REST API and web interface for submitting any web URL
 
 ## Recent Changes (October 2025)
 
-**FFmpeg Video Composition** (Latest - Oct 9):
+**Critical Bug Fixes** (Latest - Oct 9):
+- ✅ Fixed GitHub URL parsing to properly handle `.git` suffix (only removes from end, not from repo names)
+- ✅ Increased HeyGen timeout from 2 to 5 minutes to prevent premature timeouts
+- ✅ Added fallback for script parsing when AI doesn't generate sections
+- ✅ Implemented thread safety with asyncio.Lock for videos_db concurrent access
+- ✅ Sanitized error messages to prevent sensitive information disclosure
+- ✅ Fixed all bare exception handlers with specific exception types
+- ✅ Added favicon route to eliminate 404 errors
+- ✅ Made all save_videos_db calls properly async with await
+
+**FFmpeg Video Composition** (Oct 9):
 - ✅ Implemented real video composition using FFmpeg
 - ✅ Fixed ElevenLabs async generator bug (removed incorrect await)
 - ✅ Fixed AI service f-string backslash syntax errors (used chr(39) for apostrophes)
@@ -69,10 +79,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Storage
 
-**Primary Storage**: In-memory dictionary (`videos_db`)
+**Primary Storage**: Persistent JSON file with in-memory cache (`videos_db`)
 - Video metadata: ID, status, progress, timestamps
 - Progress tracking: current stage, completion percentage
 - Results: video URLs, YouTube URLs (future feature)
+- Thread-safe access using asyncio.Lock for concurrent operations
+- Automatic persistence to `videos_db.json` file
 - Error state management
 
 **File Storage**: Local filesystem
