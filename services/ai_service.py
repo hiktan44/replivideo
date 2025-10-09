@@ -130,7 +130,7 @@ Script'i şimdi oluştur:
                 max_tokens=2500
             )
             content = response.choices[0].message.content
-            return content if content else self._generate_demo_script(repo_data)
+            return content if content else self._generate_demo_script(content_data)
         
         elif self.provider == "anthropic":
             response = await self.client.messages.create(
@@ -145,9 +145,9 @@ Script'i şimdi oluştur:
             for block in response.content:
                 if hasattr(block, 'text'):
                     return block.text
-            return self._generate_demo_script(repo_data)
+            return self._generate_demo_script(content_data)
         
-        return self._generate_demo_script(repo_data)
+        return self._generate_demo_script(content_data)
     
     def _generate_demo_script(self, content_data: Dict) -> str:
         """Generate demo script when no API key is available"""

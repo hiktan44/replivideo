@@ -2,9 +2,18 @@
 
 ## Overview
 
-AI Avatar Video Maker is a FastAPI-based web application that automatically generates 10-minute Turkish tutorial videos from GitHub repositories. The system analyzes repository content, generates professional Turkish scripts using AI, creates voiceovers, and combines them with AI avatar videos to produce complete educational content.
+AI Avatar Video Maker is a FastAPI-based web application that automatically generates 10-minute Turkish tutorial videos from **any website or GitHub repository**. The system analyzes web content, generates professional Turkish scripts using AI, creates voiceovers, and combines them with AI avatar videos to produce complete educational content.
 
-The application provides a REST API and web interface for submitting GitHub URLs and monitoring video creation progress in real-time.
+The application provides a REST API and web interface for submitting any web URL (including GitHub repositories) and monitoring video creation progress in real-time.
+
+## Recent Changes (October 2025)
+
+**Web Content Expansion**: System now supports any website URL, not just GitHub repositories
+- Added `WebsiteAnalyzer` service for general web scraping using BeautifulSoup
+- Added `ContentAnalyzer` unified router that auto-detects URL type (GitHub vs general website)
+- Updated AI prompts to generate appropriate scripts for both GitHub repos and general websites
+- Enhanced frontend to accept any web URL with automatic content type detection
+- Maintains backward compatibility with existing GitHub repository analysis
 
 ## User Preferences
 
@@ -21,15 +30,17 @@ Preferred communication style: Simple, everyday language.
 - In-memory database (`videos_db` dictionary) for storing video metadata and status
 
 **Video Generation Pipeline**: Multi-stage asynchronous workflow
-1. GitHub repository analysis and content extraction
+1. **Content analysis** - Auto-detects and analyzes GitHub repos OR general websites
 2. AI script generation (10-minute Turkish tutorial)
 3. Text-to-speech audio generation
 4. Avatar video creation with lip-sync
 5. Video composition and finalization
 
 **Service Layer Architecture**: Modular service-based design
-- `GitHubAnalyzer`: Repository content extraction and analysis
-- `AIService`: Script generation using OpenAI or Anthropic
+- `GitHubAnalyzer`: Repository content extraction and analysis (GitHub-specific)
+- `WebsiteAnalyzer`: General web content extraction using BeautifulSoup (NEW)
+- `ContentAnalyzer`: Unified router that auto-detects URL type and delegates to appropriate analyzer (NEW)
+- `AIService`: Script generation using OpenAI or Anthropic (supports both GitHub and website content)
 - `ElevenLabsService`: Turkish text-to-speech conversion
 - `DIDService`: AI avatar video generation with D-ID
 - `VideoComposer`: Final video assembly and composition
@@ -80,7 +91,10 @@ Preferred communication style: Simple, everyday language.
 - Bilingual support: OpenAI or Anthropic as providers
 - Turkish language optimization
 - Structured prompt engineering for 10-minute video format (1500-1800 words)
-- Repository metadata integration (stars, forks, language, README)
+- **Dual content type support**:
+  - **GitHub repos**: Integrates repository metadata (stars, forks, language, README)
+  - **General websites**: Extracts title, description, headings, main content, and links
+- Dynamic prompt generation based on content type
 
 **Audio Generation Strategy**: Professional Turkish voiceovers
 - ElevenLabs multilingual v2 model
@@ -141,18 +155,29 @@ Preferred communication style: Simple, everyday language.
 
 **httpx**: HTTP client
 - Async API calls to external services
-- Used for GitHub API and avatar services
+- Used for GitHub API, avatar services, and web scraping
+
+**BeautifulSoup4**: HTML parsing (NEW)
+- Web content extraction from any URL
+- HTML parsing and cleaning
+- Main content identification and extraction
 
 **Python Environment**: UV package manager
 - Dependency management via `uv sync`
 - Environment-based configuration
 
-### GitHub Integration
+### Content Source Integration
 
-**GitHub API**: Repository analysis
+**GitHub API**: Repository analysis (when GitHub URL detected)
 - Public API access (no authentication for public repos)
 - Extracts: README, languages, stars, forks, topics, license
 - No dedicated API key required for public repositories
+
+**Web Scraping**: General website analysis (NEW - when non-GitHub URL detected)
+- Uses BeautifulSoup4 for HTML parsing
+- Extracts: title, meta description, headings, main content, links
+- Automatic content area detection (main, article, content divs)
+- Removes navigation, scripts, and style elements for clean content
 
 ### Future Integration Points
 
