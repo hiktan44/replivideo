@@ -200,9 +200,11 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
     try:
         videos_db[video_id]["created_at"] = datetime.now().isoformat()
         
-        update_progress(video_id, 10, "📊 Analyzing GitHub repository...")
+        update_progress(video_id, 10, "📊 Analyzing content...")
         await asyncio.sleep(1)
-        repo_data = await GitHubAnalyzer.analyze_repo(str(request.url))
+        
+        from services.website_analyzer import ContentAnalyzer
+        repo_data = await ContentAnalyzer.analyze_url(str(request.url))
         
         update_progress(video_id, 25, "✍️ Generating 10-minute Turkish script with AI...")
         script = await ScriptGenerator.generate_script(repo_data, request.video_style)
@@ -246,16 +248,17 @@ async def home():
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-4xl mx-auto">
             <h1 class="text-4xl font-bold text-center mb-2 text-purple-900">🎬 AI Avatar Video Maker</h1>
-            <p class="text-center text-gray-600 mb-8">GitHub projelerinden otomatik 10 dakikalık Türkçe eğitim videoları oluşturun</p>
+            <p class="text-center text-gray-600 mb-8">Herhangi bir web sitesi veya GitHub projesinden otomatik 10 dakikalık Türkçe eğitim videoları oluşturun</p>
             
             <div class="bg-white rounded-lg shadow-xl p-6 mb-6">
                 <h2 class="text-2xl font-semibold mb-4">Yeni Video Oluştur</h2>
                 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">GitHub Repository URL</label>
-                        <input type="text" id="githubUrl" placeholder="https://github.com/owner/repo" 
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Web Sitesi veya GitHub URL</label>
+                        <input type="text" id="githubUrl" placeholder="https://example.com veya https://github.com/owner/repo" 
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">✨ Herhangi bir web sitesi URL'i girin - otomatik analiz edilecek!</p>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -329,7 +332,12 @@ async def home():
         async function createVideo() {
             const url = document.getElementById('githubUrl').value;
             if (!url) {
-                alert('Lütfen GitHub URL girin');
+                alert('Lütfen bir web sitesi URL girin');
+                return;
+            }
+            
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                alert('Lütfen geçerli bir URL girin (http:// veya https:// ile başlamalı)');
                 return;
             }
             
