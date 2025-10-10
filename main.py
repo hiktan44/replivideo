@@ -1281,15 +1281,12 @@ async def preview_script(request: ScriptPreviewRequest):
     """Generate script preview without creating video"""
     try:
         # Analyze content
-        from services.content_analyzer import ContentAnalyzer
-        analyzer = ContentAnalyzer()
-        content_data = await analyzer.analyze_url(str(request.url))
+        from services.website_analyzer import ContentAnalyzer
+        repo_data = await ContentAnalyzer.analyze_url(str(request.url))
         
-        # Generate script
-        from services.ai_service import AIService
-        ai_service = AIService()
-        script = await ai_service.generate_turkish_script(
-            content_data,
+        # Generate script using ScriptGenerator
+        script = await ScriptGenerator.generate_script(
+            repo_data,
             request.video_style,
             request.video_duration,
             custom_prompt=request.custom_prompt
