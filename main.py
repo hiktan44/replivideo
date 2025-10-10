@@ -318,7 +318,55 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
         # Use the approved script directly
         script = videos_db[video_id].get("approved_script", request.script)
         
-        if request.mode == "screen_recording":
+        if request.mode == "custom_avatar_overlay":
+            # Custom avatar overlay pipeline with approved script
+            await update_progress(video_id, 10, "🎬 Recording screen with browser automation...")
+            
+            from services.screen_recorder import ScreenRecorderService
+            recorder = ScreenRecorderService()
+            screen_video = await recorder.record_website(
+                url=str(request.url),
+                video_id=video_id,
+                duration_minutes=request.video_duration,
+                scroll_speed=request.scroll_speed
+            )
+            
+            await update_progress(video_id, 35, "🎤 Creating Turkish professional voiceover...")
+            audio_file = await TTSService.generate_audio(script, request.voice_type)
+            
+            await update_progress(video_id, 60, "🎭 Creating custom avatar video with lip-sync...")
+            # Get custom image path
+            custom_image_path = None
+            if request.custom_avatar_image_id:
+                custom_image_path = f"videos/uploads/{request.custom_avatar_image_id}.jpg"
+            
+            # Create avatar video with custom photo
+            from services.did_service import DIDService
+            did_service = DIDService()
+            avatar_video = await did_service.create_avatar_video(
+                text=script[:500],  # D-ID has text limit
+                avatar_type=request.avatar_type,
+                custom_image_path=custom_image_path
+            )
+            
+            await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
+            from services.video_composer import VideoComposer
+            final_video = await VideoComposer.overlay_avatar_on_screen_recording(
+                screen_video=screen_video,
+                avatar_video=avatar_video,
+                audio_file=audio_file,
+                video_id=video_id,
+                position="bottom_right"
+            )
+            
+            await update_progress(video_id, 100, "✅ Video completed successfully!")
+            videos_db[video_id]["status"] = "completed"
+            videos_db[video_id]["video_url"] = f"/api/videos/{video_id}/download"
+            videos_db[video_id]["video_path"] = final_video
+            videos_db[video_id]["completed_at"] = datetime.now().isoformat()
+            await save_videos_db(videos_db)
+            
+        elif request.mode == "screen_recording":
             await update_progress(video_id, 10, "📊 Preparing screen recording...")
             
             from services.screen_recorder import ScreenRecorderService
@@ -381,8 +429,64 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
         videos_db[video_id]["created_at"] = datetime.now().isoformat()
         await save_videos_db(videos_db)  # Save changes to disk
         
-        # Check mode: screen_recording or avatar
-        if request.mode == "screen_recording":
+        # Check mode: screen_recording, avatar, or custom_avatar_overlay
+        if request.mode == "custom_avatar_overlay":
+            # Custom avatar overlay pipeline: Screen recording + custom photo avatar overlay
+            await update_progress(video_id, 5, "📊 Analyzing content...")
+            await asyncio.sleep(1)
+            
+            from services.website_analyzer import ContentAnalyzer
+            repo_data = await ContentAnalyzer.analyze_url(str(request.url))
+            
+            await update_progress(video_id, 15, f"🎬 Recording screen with browser automation...")
+            from services.screen_recorder import ScreenRecorderService
+            recorder = ScreenRecorderService()
+            screen_video = await recorder.record_website(
+                url=str(request.url),
+                video_id=video_id,
+                duration_minutes=request.video_duration,
+                scroll_speed=request.scroll_speed
+            )
+            
+            await update_progress(video_id, 35, f"✍️ Generating {request.video_duration}-minute Turkish narration script with AI...")
+            script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration, custom_prompt=getattr(request, 'custom_prompt', None))
+            
+            await update_progress(video_id, 50, "🎤 Creating Turkish professional voiceover...")
+            audio_file = await TTSService.generate_audio(script, request.voice_type)
+            
+            await update_progress(video_id, 65, "🎭 Creating custom avatar video with lip-sync...")
+            # Get custom image path
+            custom_image_path = None
+            if request.custom_avatar_image_id:
+                custom_image_path = f"videos/uploads/{request.custom_avatar_image_id}.jpg"
+            
+            # Create avatar video with custom photo
+            from services.did_service import DIDService
+            did_service = DIDService()
+            avatar_video = await did_service.create_avatar_video(
+                text=script[:500],  # D-ID has text limit
+                avatar_type=request.avatar_type,
+                custom_image_path=custom_image_path
+            )
+            
+            await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
+            from services.video_composer import VideoComposer
+            final_video = await VideoComposer.overlay_avatar_on_screen_recording(
+                screen_video=screen_video,
+                avatar_video=avatar_video,
+                audio_file=audio_file,
+                video_id=video_id,
+                position="bottom_right"
+            )
+            
+            await update_progress(video_id, 100, "✅ Video completed successfully!")
+            videos_db[video_id]["status"] = "completed"
+            videos_db[video_id]["video_url"] = f"/api/videos/{video_id}/download"
+            videos_db[video_id]["video_path"] = final_video
+            videos_db[video_id]["completed_at"] = datetime.now().isoformat()
+            await save_videos_db(videos_db)  # Save changes to disk
+            
+        elif request.mode == "screen_recording":
             # Screen recording pipeline (FAST!)
             await update_progress(video_id, 10, "📊 Analyzing content...")
             await asyncio.sleep(1)
@@ -921,6 +1025,16 @@ async def home():
             const mode = document.getElementById('videoMode').value;
             const customPrompt = document.getElementById('customPrompt').value.trim();
             
+            // Upload photo if custom_avatar_overlay mode
+            let customAvatarImageId = null;
+            if (mode === 'custom_avatar_overlay') {
+                customAvatarImageId = await uploadPhoto();
+                if (!customAvatarImageId) {
+                    alert('Lütfen bir fotoğraf yükleyin!');
+                    return;
+                }
+            }
+            
             const data = {
                 url: currentVideoUrl,
                 script: editedScript,
@@ -931,7 +1045,8 @@ async def home():
                 video_style: document.getElementById('commonVideoStyle').value,
                 provider: mode === 'avatar' ? document.getElementById('provider').value : 'heygen',
                 video_duration: parseInt(document.getElementById('commonDuration').value),
-                custom_prompt: customPrompt || null
+                custom_prompt: customPrompt || null,
+                custom_avatar_image_id: customAvatarImageId
             };
             
             try {
@@ -975,6 +1090,29 @@ async def home():
             document.body.removeChild(a);
         }
         
+        async function uploadPhoto() {
+            const photoInput = document.getElementById('avatarPhoto');
+            const file = photoInput.files[0];
+            
+            if (!file) return null;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/uploads/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                return result.image_id;
+            } catch (error) {
+                console.error('Photo upload error:', error);
+                return null;
+            }
+        }
+        
         async function createVideo() {
             const url = document.getElementById('githubUrl').value;
             if (!url) {
@@ -991,6 +1129,16 @@ async def home():
             
             const mode = document.getElementById('videoMode').value;
             
+            // Upload photo if custom_avatar_overlay mode
+            let customAvatarImageId = null;
+            if (mode === 'custom_avatar_overlay') {
+                customAvatarImageId = await uploadPhoto();
+                if (!customAvatarImageId) {
+                    alert('Lütfen bir fotoğraf yükleyin!');
+                    return;
+                }
+            }
+            
             const data = {
                 url: url,
                 mode: mode,
@@ -999,7 +1147,8 @@ async def home():
                 voice_type: document.getElementById('commonVoiceType').value,
                 video_style: document.getElementById('commonVideoStyle').value,
                 provider: mode === 'avatar' ? document.getElementById('provider').value : 'heygen',
-                video_duration: parseInt(document.getElementById('commonDuration').value)
+                video_duration: parseInt(document.getElementById('commonDuration').value),
+                custom_avatar_image_id: customAvatarImageId
             };
             
             try {
