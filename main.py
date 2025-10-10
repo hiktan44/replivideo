@@ -256,13 +256,24 @@ class TTSService:
     """ElevenLabs Text-to-Speech service"""
     
     @staticmethod
-    async def generate_audio(script: Dict, voice_type: str) -> str:
-        """Generate Turkish audio using ElevenLabs"""
+    async def generate_audio(script, voice_type: str) -> str:
+        """Generate Turkish audio using ElevenLabs
+        
+        Args:
+            script: Can be either a dict with 'full_text' key or a string
+            voice_type: Voice type for TTS
+        """
         
         from services.elevenlabs_service import ElevenLabsService
         
+        # Handle both dict and string inputs
+        if isinstance(script, dict):
+            script_text = script.get("full_text", "")
+        else:
+            script_text = str(script)
+        
         elevenlabs = ElevenLabsService()
-        audio_path = await elevenlabs.text_to_speech(script["full_text"], voice_type)
+        audio_path = await elevenlabs.text_to_speech(script_text, voice_type)
         
         return audio_path
 
