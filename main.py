@@ -511,8 +511,21 @@ async def home():
                         <select id="videoMode" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" onchange="toggleModeOptions()">
                             <option value="screen_recording">🚀 Ekran Kaydı (Hızlı - 5 dakika)</option>
                             <option value="avatar">👤 AI Avatar (Yavaş - 30-60 dakika)</option>
+                            <option value="custom_avatar_overlay">📸 Özel Fotoğraf Avatar (Köşede Konuşan Kişi)</option>
                         </select>
                         <p class="text-xs text-blue-600 mt-1">✨ Ekran kaydı modu: Otomatik sayfa gezintisi + AI seslendirme (ÖNERİLEN!)</p>
+                    </div>
+                    
+                    <!-- Custom Avatar Photo Upload (for custom_avatar_overlay mode) -->
+                    <div id="customAvatarUpload" class="hidden mb-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">📷 Fotoğrafınızı Yükleyin</label>
+                        <input type="file" id="avatarPhoto" accept="image/jpeg,image/png,image/jpg" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white">
+                        <p class="text-xs text-purple-600 mt-2">✨ Fotoğrafınız konuşacak ve videonun köşesinde yuvarlak çerçevede görünecek! (Max 5MB, JPG/PNG)</p>
+                        <div id="photoPreview" class="mt-3 hidden">
+                            <p class="text-sm text-gray-600 mb-2">Önizleme:</p>
+                            <img id="photoPreviewImg" class="w-24 h-24 rounded-full object-cover border-4 border-purple-400" />
+                        </div>
                     </div>
                     
                     <!-- Scroll Speed (for screen recording) -->
@@ -750,15 +763,48 @@ async def home():
             const mode = document.getElementById('videoMode').value;
             const avatarOptions = document.getElementById('avatarOptions');
             const scrollSpeedOption = document.getElementById('scrollSpeedOption');
+            const customAvatarUpload = document.getElementById('customAvatarUpload');
             
             if (mode === 'avatar') {
                 avatarOptions.classList.remove('hidden');
                 scrollSpeedOption.classList.add('hidden');
+                customAvatarUpload.classList.add('hidden');
+            } else if (mode === 'custom_avatar_overlay') {
+                avatarOptions.classList.add('hidden');
+                scrollSpeedOption.classList.remove('hidden');
+                customAvatarUpload.classList.remove('hidden');
             } else {
                 avatarOptions.classList.add('hidden');
                 scrollSpeedOption.classList.remove('hidden');
+                customAvatarUpload.classList.add('hidden');
             }
         }
+        
+        // Photo preview function
+        document.addEventListener('DOMContentLoaded', function() {
+            const photoInput = document.getElementById('avatarPhoto');
+            if (photoInput) {
+                photoInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                            alert('Dosya boyutu 5MB\'dan küçük olmalıdır!');
+                            photoInput.value = '';
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const preview = document.getElementById('photoPreview');
+                            const img = document.getElementById('photoPreviewImg');
+                            img.src = event.target.result;
+                            preview.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
         
         async function checkApiStatus() {
             try {
