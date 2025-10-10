@@ -589,10 +589,40 @@ async def home():
                         </div>
                     </div>
                     
-                    <button onclick="createVideo()" 
-                            class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-200">
-                        🚀 Video Oluştur
+                    <button onclick="previewScript()" 
+                            class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-200">
+                        📝 Script Önizle
                     </button>
+                </div>
+            </div>
+            
+            <!-- Script Preview Panel -->
+            <div id="scriptPreview" class="hidden bg-white rounded-lg shadow-xl p-6 mb-6">
+                <h2 class="text-2xl font-semibold mb-4">📝 Script Önizlemesi</h2>
+                
+                <div id="scriptLoading" class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    <p class="mt-4 text-gray-600">Script oluşturuluyor...</p>
+                </div>
+                
+                <div id="scriptContent" class="hidden">
+                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p class="text-sm text-blue-800">✍️ Scripti istediğiniz gibi düzenleyebilir veya direkt olarak onaylayabilirsiniz</p>
+                    </div>
+                    
+                    <textarea id="scriptText" rows="20" 
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm mb-4"></textarea>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="approveScript()" 
+                                class="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">
+                            ✅ Onayla ve Video Oluştur
+                        </button>
+                        <button onclick="cancelScript()" 
+                                class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition">
+                            ❌ İptal Et
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -623,9 +653,9 @@ async def home():
                         
                         <!-- Action Buttons -->
                         <div class="flex gap-3 mb-4">
-                            <a id="downloadLink" href="#" download class="flex-1 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition text-center">
+                            <button onclick="downloadVideo()" id="downloadBtn" class="flex-1 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
                                 📥 Videoyu İndir
-                            </a>
+                            </button>
                             <button onclick="toggleEditOptions()" class="flex-1 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
                                 ✏️ Düzenle
                             </button>
@@ -760,6 +790,121 @@ async def home():
         
         // Call on page load
         window.addEventListener('DOMContentLoaded', checkApiStatus);
+        
+        let currentScript = null;
+        
+        async function previewScript() {
+            const url = document.getElementById('githubUrl').value;
+            if (!url) {
+                alert('Lütfen bir web sitesi URL girin');
+                return;
+            }
+            
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                alert('Lütfen geçerli bir URL girin (http:// veya https:// ile başlamalı)');
+                return;
+            }
+            
+            currentVideoUrl = url;
+            
+            const data = {
+                url: url,
+                video_style: document.getElementById('commonVideoStyle').value,
+                video_duration: parseInt(document.getElementById('commonDuration').value)
+            };
+            
+            // Show script preview panel
+            document.getElementById('scriptPreview').classList.remove('hidden');
+            document.getElementById('scriptLoading').classList.remove('hidden');
+            document.getElementById('scriptContent').classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/scripts/preview', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                currentScript = result.script;
+                
+                // Show script for editing
+                document.getElementById('scriptText').value = currentScript;
+                document.getElementById('scriptLoading').classList.add('hidden');
+                document.getElementById('scriptContent').classList.remove('hidden');
+                
+            } catch (error) {
+                alert('Script oluşturulamadı: ' + error.message);
+                document.getElementById('scriptPreview').classList.add('hidden');
+            }
+        }
+        
+        function cancelScript() {
+            document.getElementById('scriptPreview').classList.add('hidden');
+            currentScript = null;
+        }
+        
+        async function approveScript() {
+            const editedScript = document.getElementById('scriptText').value;
+            if (!editedScript || !currentVideoUrl) {
+                alert('Script veya URL eksik');
+                return;
+            }
+            
+            const mode = document.getElementById('videoMode').value;
+            
+            const data = {
+                url: currentVideoUrl,
+                script: editedScript,
+                mode: mode,
+                scroll_speed: document.getElementById('scrollSpeed').value,
+                avatar_type: mode === 'avatar' ? document.getElementById('avatarType').value : 'professional_female',
+                voice_type: document.getElementById('commonVoiceType').value,
+                video_style: document.getElementById('commonVideoStyle').value,
+                provider: mode === 'avatar' ? document.getElementById('provider').value : 'heygen',
+                video_duration: parseInt(document.getElementById('commonDuration').value)
+            };
+            
+            try {
+                const response = await fetch('/api/videos/create-with-script', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                currentVideoId = result.video_id;
+                
+                // Hide script preview and show video status
+                document.getElementById('scriptPreview').classList.add('hidden');
+                document.getElementById('videoStatus').classList.remove('hidden');
+                document.getElementById('videoResult').classList.add('hidden');
+                document.getElementById('errorResult').classList.add('hidden');
+                document.getElementById('editOptions').classList.add('hidden');
+                
+                statusInterval = setInterval(checkStatus, 2000);
+                
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        }
+        
+        function downloadVideo() {
+            if (!currentVideoId) {
+                alert('Video ID bulunamadı');
+                return;
+            }
+            
+            const downloadUrl = `/api/videos/${currentVideoId}/download`;
+            
+            // Create temporary link and trigger download
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = `video_${currentVideoId}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
         
         async function createVideo() {
             const url = document.getElementById('githubUrl').value;
