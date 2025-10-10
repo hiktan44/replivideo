@@ -171,7 +171,7 @@ class ScriptGenerator:
     """AI-powered script generation service"""
     
     @staticmethod
-    async def generate_script(repo_data: Dict, style: str, video_duration: int = 10, custom_prompt: str = None) -> Dict:
+    async def generate_script(repo_data: Dict, style: str, video_duration: int = 10, custom_prompt: Optional[str] = None) -> Dict:
         """Generate Turkish video script using AI based on duration
         
         Args:
@@ -1285,15 +1285,18 @@ async def preview_script(request: ScriptPreviewRequest):
         repo_data = await ContentAnalyzer.analyze_url(str(request.url))
         
         # Generate script using ScriptGenerator
-        script = await ScriptGenerator.generate_script(
+        script_dict = await ScriptGenerator.generate_script(
             repo_data,
             request.video_style,
             request.video_duration,
-            custom_prompt=request.custom_prompt
+            custom_prompt=request.custom_prompt or ""
         )
         
+        # Extract full_text from dict
+        script_text = script_dict.get("full_text", str(script_dict))
+        
         return ScriptPreviewResponse(
-            script=script,
+            script=script_text,
             url=str(request.url),
             video_duration=request.video_duration
         )
