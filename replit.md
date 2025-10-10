@@ -17,6 +17,9 @@ The application provides a REST API and web interface for submitting any web URL
 - ✅ Enhanced frontend with script preview panel, textarea editing, and approve/cancel buttons
 - ✅ Added sub-page navigation to ScreenRecorderService - automatically clicks internal links
 - ✅ Fixed download button to trigger immediate file download (onclick method)
+- ✅ **NEW: Custom Prompt Feature** - Users can add specific instructions via textarea input
+- ✅ Custom prompts integrated into AI script generation for personalized video content
+- ✅ Both script preview and video creation endpoints support custom_prompt parameter
 - ✅ **User Experience**: Full control over script content before video generation starts
 
 **Screen Recording Mode** (Oct 10):

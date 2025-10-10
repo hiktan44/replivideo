@@ -33,7 +33,7 @@ class AIService:
         """
         
         if self.provider == "demo":
-            return self._generate_demo_script(content_data, video_duration)
+            return self._generate_demo_script(content_data, video_duration, custom_prompt)
         
         # Determine content type and build appropriate prompt
         content_type = content_data.get('type', 'github_repo')
@@ -184,7 +184,7 @@ Doğal, başlıksız ve akıcı scripti şimdi oluştur:
             if response.content and len(response.content) > 0:
                 text_content = response.content[0].text if hasattr(response.content[0], 'text') else str(response.content[0])
                 return text_content
-            return self._generate_demo_script(content_data, video_duration)
+            return self._generate_demo_script(content_data, video_duration, custom_prompt)
             
         elif self.provider == "openai":
             # OpenAI'ı yedek olarak kullan
@@ -198,16 +198,17 @@ Doğal, başlıksız ve akıcı scripti şimdi oluştur:
                 max_tokens=2500
             )
             content = response.choices[0].message.content
-            return content if content else self._generate_demo_script(content_data, video_duration)
+            return content if content else self._generate_demo_script(content_data, video_duration, custom_prompt)
         
-        return self._generate_demo_script(content_data)
+        return self._generate_demo_script(content_data, video_duration, custom_prompt)
     
-    def _generate_demo_script(self, content_data: Dict, video_duration: int = 10) -> str:
+    def _generate_demo_script(self, content_data: Dict, video_duration: int = 10, custom_prompt: str = None) -> str:
         """Generate demo script when no API key is available
         
         Args:
             content_data: Content/repository data
             video_duration: Video duration in minutes (5, 10, or 15)
+            custom_prompt: Optional custom instructions from user
         """
         
         content_type = content_data.get('type', 'github_repo')
@@ -319,7 +320,8 @@ Forum ve sosyal medya kanallarını takip edin."""
         
         closing_final = f"GitHub'da {stars} yıldız alan bu projeyi siz de kullanarak projelerinize değer katabilirsiniz." if is_github and stars > 0 else 'Siz de kullanarak faydalanabilirsiniz.'
         
-        return f"""[00:00-00:30] AÇILIŞ
+        # Build base demo script
+        base_script = f"""[00:00-00:30] AÇILIŞ
 Merhaba! Bugün {name} {content_label} detaylıca inceleyeceğiz. 
 {description}
 
@@ -407,3 +409,18 @@ Yorumlarda sorularınızı bekliyorum.
 
 Bir sonraki videoda görüşmek üzere! 👋
 """
+        
+        # Add custom prompt note if provided
+        if custom_prompt:
+            return f"""[DEMO MODE] Bu demo script, gerçek AI API anahtarı olmadığı için kullanılıyor. 
+
+KULLANICI TALİMATI: {custom_prompt}
+
+NOT: Gerçek AI anahtarı eklediğinizde (OPENAI_API_KEY veya ANTHROPIC_API_KEY), bu talimat dikkate alınarak özelleştirilmiş script oluşturulacak.
+
+---
+
+{base_script}"""
+        
+        # Return normal demo script without custom prompt note
+        return base_script

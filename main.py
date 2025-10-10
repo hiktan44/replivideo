@@ -61,6 +61,7 @@ class VideoCreateRequest(BaseModel):
     video_duration: int = 10  # 5, 10, or 15 minutes
     mode: str = "avatar"  # "avatar" or "screen_recording"
     scroll_speed: str = "medium"  # For screen recording: "slow", "medium", "fast"
+    custom_prompt: Optional[str] = None
 
 class VideoStatusResponse(BaseModel):
     video_id: str
@@ -165,19 +166,20 @@ class ScriptGenerator:
     """AI-powered script generation service"""
     
     @staticmethod
-    async def generate_script(repo_data: Dict, style: str, video_duration: int = 10) -> Dict:
+    async def generate_script(repo_data: Dict, style: str, video_duration: int = 10, custom_prompt: str = None) -> Dict:
         """Generate Turkish video script using AI based on duration
         
         Args:
             repo_data: Content/repository data
             style: Video style (tutorial, review, quick_start)
             video_duration: Video duration in minutes (5, 10, or 15)
+            custom_prompt: Optional custom instructions from user
         """
         
         from services.ai_service import AIService
         
         ai_service = AIService()
-        script_text = await ai_service.generate_turkish_script(repo_data, style, video_duration)
+        script_text = await ai_service.generate_turkish_script(repo_data, style, video_duration, custom_prompt=custom_prompt)
         
         sections = []
         current_section = None
@@ -394,7 +396,7 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             )
             
             await update_progress(video_id, 50, f"✍️ Generating {request.video_duration}-minute Turkish narration script with AI...")
-            script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration)
+            script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration, custom_prompt=getattr(request, 'custom_prompt', None))
             
             await update_progress(video_id, 70, "🎤 Creating Turkish professional voiceover...")
             audio_file = await TTSService.generate_audio(script, request.voice_type)
@@ -419,7 +421,7 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             repo_data = await ContentAnalyzer.analyze_url(str(request.url))
             
             await update_progress(video_id, 25, f"✍️ Generating {request.video_duration}-minute Turkish script with AI...")
-            script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration)
+            script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration, custom_prompt=getattr(request, 'custom_prompt', None))
             
             await update_progress(video_id, 45, "🎤 Creating Turkish professional voiceover...")
             audio_file = await TTSService.generate_audio(script, request.voice_type)
