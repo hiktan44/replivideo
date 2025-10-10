@@ -59,6 +59,8 @@ class VideoCreateRequest(BaseModel):
     video_style: str = "tutorial"
     provider: str = "heygen"  # "did" or "heygen"
     video_duration: int = 10  # 5, 10, or 15 minutes
+    mode: str = "avatar"  # "avatar" or "screen_recording"
+    scroll_speed: str = "medium"  # For screen recording: "slow", "medium", "fast"
 
 class VideoStatusResponse(BaseModel):
     video_id: str
@@ -283,33 +285,71 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
         videos_db[video_id]["created_at"] = datetime.now().isoformat()
         await save_videos_db(videos_db)  # Save changes to disk
         
-        await update_progress(video_id, 10, "📊 Analyzing content...")
-        await asyncio.sleep(1)
-        
-        from services.website_analyzer import ContentAnalyzer
-        repo_data = await ContentAnalyzer.analyze_url(str(request.url))
-        
-        await update_progress(video_id, 25, f"✍️ Generating {request.video_duration}-minute Turkish script with AI...")
-        script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration)
-        
-        await update_progress(video_id, 45, "🎤 Creating Turkish professional voiceover...")
-        audio_file = await TTSService.generate_audio(script, request.voice_type)
-        
-        await update_progress(video_id, 65, f"🎭 Rendering avatar video segments with {request.provider.upper()}...")
-        avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file, request.provider)
-        
-        await update_progress(video_id, 85, "🎬 Composing final video...")
-        
-        from services.video_composer import VideoComposer
-        composer = VideoComposer()
-        final_video = await composer.compose_video(avatar_videos, audio_file, video_id)
-        
-        await update_progress(video_id, 100, "✅ Video completed successfully!")
-        videos_db[video_id]["status"] = "completed"
-        videos_db[video_id]["video_url"] = f"/api/videos/{video_id}/download"
-        videos_db[video_id]["video_path"] = final_video
-        videos_db[video_id]["completed_at"] = datetime.now().isoformat()
-        await save_videos_db(videos_db)  # Save changes to disk
+        # Check mode: screen_recording or avatar
+        if request.mode == "screen_recording":
+            # Screen recording pipeline (FAST!)
+            await update_progress(video_id, 10, "📊 Analyzing content...")
+            await asyncio.sleep(1)
+            
+            from services.website_analyzer import ContentAnalyzer
+            repo_data = await ContentAnalyzer.analyze_url(str(request.url))
+            
+            await update_progress(video_id, 20, f"🎬 Recording screen with browser automation...")
+            from services.screen_recorder import ScreenRecorderService
+            recorder = ScreenRecorderService()
+            screen_video = await recorder.record_website(
+                url=str(request.url),
+                video_id=video_id,
+                duration_minutes=request.video_duration,
+                scroll_speed=request.scroll_speed
+            )
+            
+            await update_progress(video_id, 50, f"✍️ Generating {request.video_duration}-minute Turkish narration script with AI...")
+            script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration)
+            
+            await update_progress(video_id, 70, "🎤 Creating Turkish professional voiceover...")
+            audio_file = await TTSService.generate_audio(script, request.voice_type)
+            
+            await update_progress(video_id, 90, "🎬 Muxing screen recording with audio...")
+            from services.video_composer import VideoComposer
+            final_video = await VideoComposer.mux_screen_recording_with_audio(screen_video, audio_file, video_id)
+            
+            await update_progress(video_id, 100, "✅ Video completed successfully!")
+            videos_db[video_id]["status"] = "completed"
+            videos_db[video_id]["video_url"] = f"/api/videos/{video_id}/download"
+            videos_db[video_id]["video_path"] = final_video
+            videos_db[video_id]["completed_at"] = datetime.now().isoformat()
+            await save_videos_db(videos_db)  # Save changes to disk
+            
+        else:
+            # Original avatar pipeline
+            await update_progress(video_id, 10, "📊 Analyzing content...")
+            await asyncio.sleep(1)
+            
+            from services.website_analyzer import ContentAnalyzer
+            repo_data = await ContentAnalyzer.analyze_url(str(request.url))
+            
+            await update_progress(video_id, 25, f"✍️ Generating {request.video_duration}-minute Turkish script with AI...")
+            script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration)
+            
+            await update_progress(video_id, 45, "🎤 Creating Turkish professional voiceover...")
+            audio_file = await TTSService.generate_audio(script, request.voice_type)
+            
+            await update_progress(video_id, 65, f"🎭 Rendering avatar video segments with {request.provider.upper()}...")
+            avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file, request.provider)
+            
+            await update_progress(video_id, 85, "🎬 Composing final video...")
+            
+            from services.video_composer import VideoComposer
+            composer = VideoComposer()
+            final_video = await composer.compose_video(avatar_videos, audio_file, video_id)
+            
+            await update_progress(video_id, 100, "✅ Video completed successfully!")
+            videos_db[video_id]["status"] = "completed"
+            videos_db[video_id]["video_url"] = f"/api/videos/{video_id}/download"
+            videos_db[video_id]["video_path"] = final_video
+            videos_db[video_id]["completed_at"] = datetime.now().isoformat()
+            await save_videos_db(videos_db)  # Save changes to disk
         
     except Exception as e:
         # Sanitize error message to prevent information disclosure
@@ -365,7 +405,27 @@ async def home():
                         <p class="text-xs text-gray-500 mt-1">✨ Herhangi bir web sitesi URL'i girin - otomatik analiz edilecek!</p>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <!-- Video Mode Selection -->
+                    <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">🎥 Video Oluşturma Modu</label>
+                        <select id="videoMode" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" onchange="toggleModeOptions()">
+                            <option value="screen_recording">🚀 Ekran Kaydı (Hızlı - 5 dakika)</option>
+                            <option value="avatar">👤 AI Avatar (Yavaş - 30-60 dakika)</option>
+                        </select>
+                        <p class="text-xs text-blue-600 mt-1">✨ Ekran kaydı modu: Otomatik sayfa gezintisi + AI seslendirme (ÖNERİLEN!)</p>
+                    </div>
+                    
+                    <!-- Scroll Speed (for screen recording) -->
+                    <div id="scrollSpeedOption" class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">🖱️ Scroll Hızı</label>
+                        <select id="scrollSpeed" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="slow">Yavaş (Detaylı gösterim)</option>
+                            <option value="medium" selected>Orta (Dengeli)</option>
+                            <option value="fast">Hızlı (Özet)</option>
+                        </select>
+                    </div>
+                    
+                    <div id="avatarOptions" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 hidden">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Video Süresi</label>
                             <select id="videoDuration" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
@@ -405,6 +465,36 @@ async def home():
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Video Stili</label>
                             <select id="videoStyle" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                <option value="tutorial">Eğitim</option>
+                                <option value="review">İnceleme</option>
+                                <option value="quick_start">Hızlı Başlangıç</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Common Options (always visible) -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Video Süresi</label>
+                            <select id="commonDuration" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                <option value="5">5 Dakika (Hızlı)</option>
+                                <option value="10" selected>10 Dakika (Normal)</option>
+                                <option value="15">15 Dakika (Detaylı)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ses Tipi</label>
+                            <select id="commonVoiceType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                <option value="tr_female_professional">Türkçe Profesyonel Kadın</option>
+                                <option value="tr_male_professional">Türkçe Profesyonel Erkek</option>
+                                <option value="tr_female_friendly">Türkçe Samimi Kadın</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Video Stili</label>
+                            <select id="commonVideoStyle" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                                 <option value="tutorial">Eğitim</option>
                                 <option value="review">İnceleme</option>
                                 <option value="quick_start">Hızlı Başlangıç</option>
@@ -526,6 +616,20 @@ async def home():
         let statusInterval = null;
         
         // Check API status on page load
+        function toggleModeOptions() {
+            const mode = document.getElementById('videoMode').value;
+            const avatarOptions = document.getElementById('avatarOptions');
+            const scrollSpeedOption = document.getElementById('scrollSpeedOption');
+            
+            if (mode === 'avatar') {
+                avatarOptions.classList.remove('hidden');
+                scrollSpeedOption.classList.add('hidden');
+            } else {
+                avatarOptions.classList.add('hidden');
+                scrollSpeedOption.classList.remove('hidden');
+            }
+        }
+        
         async function checkApiStatus() {
             try {
                 const response = await fetch('/api/status');
@@ -584,13 +688,17 @@ async def home():
             
             currentVideoUrl = url;
             
+            const mode = document.getElementById('videoMode').value;
+            
             const data = {
                 url: url,
-                avatar_type: document.getElementById('avatarType').value,
-                voice_type: document.getElementById('voiceType').value,
-                video_style: document.getElementById('videoStyle').value,
-                provider: document.getElementById('provider').value,
-                video_duration: parseInt(document.getElementById('videoDuration').value)
+                mode: mode,
+                scroll_speed: document.getElementById('scrollSpeed').value,
+                avatar_type: mode === 'avatar' ? document.getElementById('avatarType').value : 'professional_female',
+                voice_type: document.getElementById('commonVoiceType').value,
+                video_style: document.getElementById('commonVideoStyle').value,
+                provider: mode === 'avatar' ? document.getElementById('provider').value : 'heygen',
+                video_duration: parseInt(document.getElementById('commonDuration').value)
             };
             
             try {

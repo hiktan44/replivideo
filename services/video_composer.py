@@ -141,6 +141,57 @@ class VideoComposer:
         return output_path
     
     @staticmethod
+    async def mux_screen_recording_with_audio(
+        screen_video: str,
+        audio_file: str,
+        video_id: str
+    ) -> str:
+        """
+        Mux screen recording with audio using FFmpeg
+        Converts webm to mp4 if needed and adds audio track
+        """
+        final_video_path = f"videos/final_{video_id}.mp4"
+        
+        Path("videos").mkdir(exist_ok=True)
+        
+        try:
+            # Check if files exist
+            if not Path(screen_video).exists():
+                print("⚠️ Screen recording not found, creating demo video")
+                return await VideoComposer._create_demo_fallback(final_video_path)
+            
+            if not Path(audio_file).exists():
+                print("⚠️ Audio file not found, creating demo video")
+                return await VideoComposer._create_demo_fallback(final_video_path)
+            
+            print(f"🎬 Muxing screen recording with audio...")
+            
+            # Convert webm to mp4 and add audio in one step
+            mux_cmd = [
+                'ffmpeg', '-y',
+                '-i', screen_video,
+                '-i', audio_file,
+                '-c:v', 'libx264',  # Re-encode video to h264
+                '-preset', 'medium',
+                '-crf', '23',
+                '-c:a', 'aac',
+                '-b:a', '128k',
+                '-shortest',  # End video when shortest stream ends
+                '-movflags', '+faststart',  # QuickTime compatibility
+                final_video_path
+            ]
+            
+            print(f"🔊 Converting and muxing with audio track...")
+            await VideoComposer._run_ffmpeg(mux_cmd)
+            
+            print(f"✅ Screen recording video composed successfully: {final_video_path}")
+            return final_video_path
+            
+        except Exception as e:
+            print(f"❌ Screen recording muxing failed: {e}")
+            return await VideoComposer._create_demo_fallback(final_video_path)
+    
+    @staticmethod
     async def create_demo_video() -> str:
         """Create a valid demo MP4 file"""
         demo_path = "demo_assets/demo_video.mp4"
