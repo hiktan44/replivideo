@@ -350,10 +350,21 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
             audio_file = await TTSService.generate_audio(script, request.voice_type)
             
             await update_progress(video_id, 60, "🎭 Creating custom avatar video with lip-sync...")
-            # Get custom image path
+            # Get custom image path - check both jpg and png
             custom_image_path = None
             if request.custom_avatar_image_id:
-                custom_image_path = f"videos/uploads/{request.custom_avatar_image_id}.jpg"
+                # Check which format was uploaded
+                jpg_path = f"videos/uploads/{request.custom_avatar_image_id}.jpg"
+                png_path = f"videos/uploads/{request.custom_avatar_image_id}.png"
+                
+                from pathlib import Path
+                if Path(jpg_path).exists():
+                    custom_image_path = jpg_path
+                elif Path(png_path).exists():
+                    custom_image_path = png_path
+                else:
+                    print(f"⚠️ Custom image not found: {request.custom_avatar_image_id}")
+                    custom_image_path = None
             
             # Create avatar video with custom photo
             from services.did_service import DIDService
@@ -470,10 +481,19 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             audio_file = await TTSService.generate_audio(script, request.voice_type)
             
             await update_progress(video_id, 65, "🎭 Creating custom avatar video with lip-sync...")
-            # Get custom image path
+            # Get custom image path - check both jpg and png
             custom_image_path = None
             if request.custom_avatar_image_id:
-                custom_image_path = f"videos/uploads/{request.custom_avatar_image_id}.jpg"
+                from pathlib import Path
+                jpg_path = f"videos/uploads/{request.custom_avatar_image_id}.jpg"
+                png_path = f"videos/uploads/{request.custom_avatar_image_id}.png"
+                
+                if Path(jpg_path).exists():
+                    custom_image_path = jpg_path
+                elif Path(png_path).exists():
+                    custom_image_path = png_path
+                else:
+                    print(f"⚠️ Custom image not found: {request.custom_avatar_image_id}")
             
             # Create avatar video with custom photo
             from services.did_service import DIDService
@@ -633,11 +653,13 @@ async def home():
                     <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">🎥 Video Oluşturma Modu</label>
                         <select id="videoMode" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" onchange="toggleModeOptions()">
-                            <option value="screen_recording">🚀 Ekran Kaydı (Hızlı - 5 dakika)</option>
-                            <option value="avatar">👤 AI Avatar (Yavaş - 30-60 dakika)</option>
-                            <option value="custom_avatar_overlay">📸 Özel Fotoğraf Avatar (Köşede Konuşan Kişi)</option>
+                            <option value="screen_recording">🚀 Sadece Ekran Kaydı + Ses (Hızlı - Avatar YOK)</option>
+                            <option value="custom_avatar_overlay">📸 Ekran Kaydı + Fotoğraflı Avatar Overlay (Köşede siz konuşursunuz!)</option>
+                            <option value="avatar">👤 Sadece AI Avatar (Yavaş - Web sitesi YOK)</option>
                         </select>
-                        <p class="text-xs text-blue-600 mt-1">✨ Ekran kaydı modu: Otomatik sayfa gezintisi + AI seslendirme (ÖNERİLEN!)</p>
+                        <p class="text-xs text-blue-600 mt-2">
+                            💡 <strong>Fotoğrafınızla video yapmak için:</strong> "Ekran Kaydı + Fotoğraflı Avatar" seçin → Fotoğraf yükleyin → Script onaylayın
+                        </p>
                     </div>
                     
                     <!-- Custom Avatar Photo Upload (for custom_avatar_overlay mode) -->
