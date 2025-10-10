@@ -2,13 +2,24 @@
 
 ## Overview
 
-AI Avatar Video Maker is a FastAPI-based web application that automatically generates 10-minute Turkish tutorial videos from **any website or GitHub repository**. The system analyzes web content, generates professional Turkish scripts using AI, creates voiceovers, and combines them with AI avatar videos to produce complete educational content.
+AI Avatar Video Maker is a FastAPI-based web application that automatically generates Turkish tutorial videos (5, 10, or 15 minutes) from **any website or GitHub repository**. The system analyzes web content, generates professional Turkish scripts using AI, creates voiceovers, and combines them with AI avatar videos or screen recordings to produce complete educational content.
 
-The application provides a REST API and web interface for submitting any web URL (including GitHub repositories) and monitoring video creation progress in real-time.
+The application provides a REST API and web interface for submitting any web URL (including GitHub repositories) and monitoring video creation progress in real-time. Users can also **upload their own photo to create a personalized talking avatar** that appears in a circular frame at the video corner with lip-sync and facial expressions.
 
 ## Recent Changes (October 2025)
 
-**NEW: Script Preview & Editing** (Latest - Oct 10):
+**NEW: Custom Photo Avatar Overlay** (Latest - Oct 10):
+- ✅ Implemented custom photo upload feature - users can upload their own photo to create personalized talking avatar
+- ✅ Added `/api/uploads/image` endpoint with image validation (5MB max, JPG/PNG only)
+- ✅ Extended DIDService to support custom images via base64 encoding for D-ID API
+- ✅ Implemented FFmpeg circular mask overlay in VideoComposer for professional circular avatar display
+- ✅ Added `custom_avatar_overlay` video mode combining screen recording + custom photo avatar
+- ✅ Avatar displayed in circular frame at video corner (bottom-right) with lip-sync and facial expressions
+- ✅ Frontend photo preview and upload integration in both direct video creation and script preview flows
+- ✅ Installed python-multipart for file upload support
+- ✅ **User Experience**: Upload your photo, it talks and appears in a circular frame at video corner!
+
+**Script Preview & Editing** (Oct 10):
 - ✅ Implemented script preview workflow - users can review AI-generated scripts before video creation
 - ✅ Added `/api/scripts/preview` endpoint for generating scripts without creating videos
 - ✅ Added `/api/videos/create-with-script` endpoint for creating videos with pre-approved scripts
