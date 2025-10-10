@@ -1060,6 +1060,11 @@ async def home():
                     body: JSON.stringify(data)
                 });
                 
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Video oluşturulamadı');
+                }
+                
                 const result = await response.json();
                 currentVideoId = result.video_id;
                 
@@ -1109,10 +1114,16 @@ async def home():
                     body: formData
                 });
                 
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Fotoğraf yüklenemedi');
+                }
+                
                 const result = await response.json();
                 return result.image_id;
             } catch (error) {
                 console.error('Photo upload error:', error);
+                alert('Fotoğraf yüklenirken hata: ' + error.message);
                 return null;
             }
         }

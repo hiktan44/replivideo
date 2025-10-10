@@ -4,7 +4,7 @@ Uses OpenAI or Anthropic to generate Turkish video scripts
 """
 
 import os
-from typing import Dict
+from typing import Dict, Optional
 from openai import AsyncOpenAI
 from anthropic import AsyncAnthropic
 
@@ -22,7 +22,7 @@ class AIService:
         else:
             self.provider = "demo"
     
-    async def generate_turkish_script(self, content_data: Dict, style: str, video_duration: int = 10, custom_prompt: str = None) -> str:
+    async def generate_turkish_script(self, content_data: Dict, style: str, video_duration: int = 10, custom_prompt: Optional[str] = None) -> str:
         """Generate Turkish video script based on duration
         
         Args:
@@ -202,7 +202,7 @@ Doğal, başlıksız ve akıcı scripti şimdi oluştur:
         
         return self._generate_demo_script(content_data, video_duration, custom_prompt)
     
-    def _generate_demo_script(self, content_data: Dict, video_duration: int = 10, custom_prompt: str = None) -> str:
+    def _generate_demo_script(self, content_data: Dict, video_duration: int = 10, custom_prompt: Optional[str] = None) -> str:
         """Generate demo script when no API key is available
         
         Args:
