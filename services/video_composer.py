@@ -192,6 +192,86 @@ class VideoComposer:
             return await VideoComposer._create_demo_fallback(final_video_path)
     
     @staticmethod
+    async def overlay_avatar_on_screen_recording(
+        screen_video: str,
+        avatar_video: str,
+        audio_file: str,
+        video_id: str,
+        position: str = "bottom_right"
+    ) -> str:
+        """
+        Overlay circular avatar video on screen recording with audio
+        
+        Args:
+            screen_video: Screen recording video path
+            avatar_video: Avatar video path (will be made circular)
+            audio_file: Audio narration path
+            video_id: Video ID for output naming
+            position: Avatar position (bottom_right, bottom_left, top_right, top_left)
+        """
+        final_video_path = f"videos/final_{video_id}.mp4"
+        
+        Path("videos").mkdir(exist_ok=True)
+        
+        try:
+            # Validate inputs
+            if not Path(screen_video).exists():
+                print("⚠️ Screen recording not found")
+                return await VideoComposer._create_demo_fallback(final_video_path)
+            
+            if not Path(avatar_video).exists():
+                print("⚠️ Avatar video not found")
+                return await VideoComposer._create_demo_fallback(final_video_path)
+            
+            if not Path(audio_file).exists():
+                print("⚠️ Audio file not found")
+                return await VideoComposer._create_demo_fallback(final_video_path)
+            
+            print(f"🎬 Creating circular avatar overlay on screen recording...")
+            
+            # Position mapping (X:Y coordinates, offset from edges)
+            positions = {
+                "bottom_right": "W-w-20:H-h-20",
+                "bottom_left": "20:H-h-20",
+                "top_right": "W-w-20:20",
+                "top_left": "20:20"
+            }
+            overlay_position = positions.get(position, positions["bottom_right"])
+            
+            # FFmpeg command with circular mask overlay
+            # Scale avatar to 150x150, apply circular mask, overlay on screen recording, add audio
+            overlay_cmd = [
+                'ffmpeg', '-y',
+                '-i', screen_video,      # Input 0: Screen recording
+                '-i', avatar_video,      # Input 1: Avatar video
+                '-i', audio_file,        # Input 2: Audio narration
+                '-filter_complex',
+                f'[1:v]scale=150:150,format=yuva420p,geq=lum=' + chr(39) + 'lum(X,Y)' + chr(39) + ':a=' + chr(39) + 
+                'if(lt(sqrt(pow(X-75,2)+pow(Y-75,2)),75),255,0)' + chr(39) + '[avatar];' +
+                f'[0:v][avatar]overlay={overlay_position}[v]',
+                '-map', '[v]',           # Use filtered video
+                '-map', '2:a',           # Use audio from input 2
+                '-c:v', 'libx264',
+                '-preset', 'medium',
+                '-crf', '23',
+                '-c:a', 'aac',
+                '-b:a', '128k',
+                '-shortest',
+                '-movflags', '+faststart',
+                final_video_path
+            ]
+            
+            print(f"🎭 Applying circular mask and overlaying avatar at {position}...")
+            await VideoComposer._run_ffmpeg(overlay_cmd)
+            
+            print(f"✅ Avatar overlay video composed successfully: {final_video_path}")
+            return final_video_path
+            
+        except Exception as e:
+            print(f"❌ Avatar overlay composition failed: {e}")
+            return await VideoComposer._create_demo_fallback(final_video_path)
+    
+    @staticmethod
     async def create_demo_video() -> str:
         """Create a valid demo MP4 file"""
         demo_path = "demo_assets/demo_video.mp4"

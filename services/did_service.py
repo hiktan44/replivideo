@@ -6,6 +6,7 @@ Creates talking avatar videos
 import os
 import httpx
 import asyncio
+import base64
 from pathlib import Path
 
 class DIDService:
@@ -25,15 +26,36 @@ class DIDService:
             "casual_male": "https://d-id-public-bucket.s3.amazonaws.com/mark.jpg"
         }
     
-    async def create_avatar_video(self, text: str, avatar_type: str) -> str:
-        """Create avatar video using D-ID API"""
+    async def create_avatar_video(self, text: str, avatar_type: str, custom_image_path: str = None) -> str:
+        """Create avatar video using D-ID API
+        
+        Args:
+            text: Script text for lip-sync
+            avatar_type: Preset avatar type (ignored if custom_image_path provided)
+            custom_image_path: Optional path to custom user photo for personalized avatar
+        """
         
         if not self.enabled:
             print("⚠️ D-ID API key not found - using demo mode")
             return await self._create_demo_video(text, avatar_type)
         
         try:
-            avatar_url = self.avatar_images.get(avatar_type, self.avatar_images["professional_female"])
+            # Prepare avatar source
+            if custom_image_path:
+                # Convert local image to base64 data URI for D-ID API
+                image_path = Path(custom_image_path)
+                if image_path.exists():
+                    image_data = image_path.read_bytes()
+                    base64_image = base64.b64encode(image_data).decode('utf-8')
+                    
+                    # Detect MIME type
+                    mime_type = "image/jpeg" if custom_image_path.endswith('.jpg') or custom_image_path.endswith('.jpeg') else "image/png"
+                    avatar_url = f"data:{mime_type};base64,{base64_image}"
+                else:
+                    print(f"⚠️ Custom image not found: {custom_image_path}, using default")
+                    avatar_url = self.avatar_images.get(avatar_type, self.avatar_images["professional_female"])
+            else:
+                avatar_url = self.avatar_images.get(avatar_type, self.avatar_images["professional_female"])
             
             headers = {
                 "Authorization": f"Basic {self.api_key}",
