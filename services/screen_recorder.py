@@ -116,6 +116,9 @@ class ScreenRecorderService:
         print(f"🖱️ Starting automatic navigation for {total_duration}s...")
         
         start_time = asyncio.get_event_loop().time()
+        visited_pages = set()
+        current_url = page.url
+        visited_pages.add(current_url)
         
         # Get page height
         page_height = await page.evaluate("document.body.scrollHeight")
@@ -123,6 +126,7 @@ class ScreenRecorderService:
         
         scroll_position = 0
         direction = 1  # 1 for down, -1 for up
+        last_subpage_click = start_time
         
         while (asyncio.get_event_loop().time() - start_time) < total_duration:
             # Smooth scroll
@@ -144,8 +148,65 @@ class ScreenRecorderService:
             # Try to click interactive elements occasionally
             if int(asyncio.get_event_loop().time() - start_time) % 20 == 0:
                 await self._try_click_elements(page)
+            
+            # Try to navigate to sub-pages every 30 seconds
+            elapsed = asyncio.get_event_loop().time()
+            if elapsed - last_subpage_click >= 30 and elapsed - start_time < total_duration - 10:
+                navigated = await self._try_navigate_subpage(page, visited_pages)
+                if navigated:
+                    last_subpage_click = elapsed
+                    # Update page dimensions for new page
+                    page_height = await page.evaluate("document.body.scrollHeight")
+                    viewport_height = await page.evaluate("window.innerHeight")
+                    scroll_position = 0
+                    direction = 1
         
         print(f"✅ Navigation completed after {total_duration}s")
+    
+    async def _try_navigate_subpage(self, page: Page, visited_pages: set) -> bool:
+        """Try to navigate to a sub-page by clicking links"""
+        try:
+            base_url = page.url.split('?')[0].rstrip('/')
+            
+            # Find internal links
+            links = await page.query_selector_all('a[href]:visible')
+            
+            for link in links[:10]:  # Check first 10 links
+                try:
+                    href = await link.get_attribute('href')
+                    if not href:
+                        continue
+                    
+                    # Convert relative URLs to absolute
+                    if href.startswith('/'):
+                        from urllib.parse import urljoin
+                        full_url = urljoin(page.url, href)
+                    elif href.startswith('http'):
+                        full_url = href
+                    else:
+                        continue
+                    
+                    # Check if it's same domain and not visited
+                    if full_url.startswith(base_url) and full_url not in visited_pages:
+                        # Ignore anchors, external, and special links
+                        if '#' in full_url.split('/')[-1]:
+                            continue
+                        if full_url.endswith('.pdf') or full_url.endswith('.zip'):
+                            continue
+                        
+                        print(f"🔗 Navigating to sub-page: {full_url}")
+                        await page.goto(full_url, wait_until='networkidle', timeout=15000)
+                        visited_pages.add(full_url)
+                        await asyncio.sleep(2)
+                        return True
+                        
+                except Exception:
+                    continue
+            
+            return False
+        except Exception as e:
+            print(f"⚠️ Sub-page navigation error: {e}")
+            return False
     
     async def _try_click_elements(self, page: Page):
         """Try to click on interesting elements (tabs, buttons, etc.)"""

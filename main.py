@@ -73,6 +73,27 @@ class VideoStatusResponse(BaseModel):
     completed_at: Optional[str] = None
     error: Optional[str] = None
 
+class ScriptPreviewRequest(BaseModel):
+    url: HttpUrl
+    video_style: str = "tutorial"
+    video_duration: int = 10
+
+class ScriptPreviewResponse(BaseModel):
+    script: str
+    url: str
+    video_duration: int
+
+class VideoCreateWithScriptRequest(BaseModel):
+    url: HttpUrl
+    script: str
+    avatar_type: str = "professional_female"
+    voice_type: str = "tr_female_professional"
+    video_style: str = "tutorial"
+    provider: str = "heygen"
+    video_duration: int = 10
+    mode: str = "avatar"
+    scroll_speed: str = "medium"
+
 class GitHubAnalyzer:
     """GitHub repository analysis service"""
     
@@ -278,6 +299,72 @@ async def update_progress(video_id: str, progress: int, stage: str):
         videos_db[video_id]["progress"] = progress
         videos_db[video_id]["current_stage"] = stage
         await save_videos_db(videos_db)  # Save changes to disk
+
+async def process_video_pipeline_with_script(video_id: str, request: VideoCreateWithScriptRequest):
+    """Video generation pipeline with pre-approved script"""
+    try:
+        videos_db[video_id]["created_at"] = datetime.now().isoformat()
+        await save_videos_db(videos_db)
+        
+        # Use the approved script directly
+        script = videos_db[video_id].get("approved_script", request.script)
+        
+        if request.mode == "screen_recording":
+            await update_progress(video_id, 10, "📊 Preparing screen recording...")
+            
+            from services.screen_recorder import ScreenRecorderService
+            recorder = ScreenRecorderService()
+            screen_video = await recorder.record_website(
+                url=str(request.url),
+                video_id=video_id,
+                duration_minutes=request.video_duration,
+                scroll_speed=request.scroll_speed
+            )
+            
+            await update_progress(video_id, 50, "🎤 Creating Turkish professional voiceover...")
+            audio_file = await TTSService.generate_audio(script, request.voice_type)
+            
+            await update_progress(video_id, 80, "🎬 Muxing screen recording with audio...")
+            from services.video_composer import VideoComposer
+            final_video = await VideoComposer.mux_screen_recording_with_audio(screen_video, audio_file, video_id)
+            
+            await update_progress(video_id, 100, "✅ Video completed successfully!")
+            videos_db[video_id]["status"] = "completed"
+            videos_db[video_id]["video_url"] = f"/api/videos/{video_id}/download"
+            videos_db[video_id]["video_path"] = final_video
+            videos_db[video_id]["completed_at"] = datetime.now().isoformat()
+            await save_videos_db(videos_db)
+        else:
+            await update_progress(video_id, 25, "🎤 Creating Turkish professional voiceover...")
+            audio_file = await TTSService.generate_audio(script, request.voice_type)
+            
+            await update_progress(video_id, 50, f"🎭 Rendering avatar video segments with {request.provider.upper()}...")
+            avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file, request.provider)
+            
+            await update_progress(video_id, 75, "🎬 Composing final video...")
+            from services.video_composer import VideoComposer
+            composer = VideoComposer()
+            final_video = await composer.compose_video(avatar_videos, audio_file, video_id)
+            
+            await update_progress(video_id, 100, "✅ Video completed successfully!")
+            videos_db[video_id]["status"] = "completed"
+            videos_db[video_id]["video_url"] = f"/api/videos/{video_id}/download"
+            videos_db[video_id]["video_path"] = final_video
+            videos_db[video_id]["completed_at"] = datetime.now().isoformat()
+            await save_videos_db(videos_db)
+            
+    except Exception as e:
+        error_msg = "Video işleme sırasında bir hata oluştu"
+        if "timeout" in str(e).lower():
+            error_msg = "Video oluşturma zaman aşımına uğradı"
+        elif "api" in str(e).lower():
+            error_msg = "API servisi ile bağlantı kurulamadı"
+        
+        videos_db[video_id]["status"] = "failed"
+        videos_db[video_id]["error"] = error_msg
+        videos_db[video_id]["current_stage"] = f"❌ Hata: {error_msg}"
+        print(f"❌ Pipeline error for {video_id}: {str(e)}")
+        await save_videos_db(videos_db)
 
 async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
     """Main video generation pipeline"""
@@ -822,6 +909,32 @@ async def home():
     """
     return HTMLResponse(content=html_content)
 
+@app.post("/api/scripts/preview", response_model=ScriptPreviewResponse)
+async def preview_script(request: ScriptPreviewRequest):
+    """Generate script preview without creating video"""
+    try:
+        # Analyze content
+        from services.content_analyzer import ContentAnalyzer
+        analyzer = ContentAnalyzer()
+        content_data = await analyzer.analyze_url(str(request.url))
+        
+        # Generate script
+        from services.ai_service import AIService
+        ai_service = AIService()
+        script = await ai_service.generate_turkish_script(
+            content_data,
+            request.video_style,
+            request.video_duration
+        )
+        
+        return ScriptPreviewResponse(
+            script=script,
+            url=str(request.url),
+            video_duration=request.video_duration
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Script oluşturulamadı: {str(e)}")
+
 @app.post("/api/videos/create")
 async def create_video(request: VideoCreateRequest, background_tasks: BackgroundTasks):
     """Create a new video generation task"""
@@ -841,6 +954,29 @@ async def create_video(request: VideoCreateRequest, background_tasks: Background
     
     await save_videos_db(videos_db)  # Save new video to disk
     background_tasks.add_task(process_video_pipeline, video_id, request)
+    
+    return {"video_id": video_id, "status": "processing"}
+
+@app.post("/api/videos/create-with-script")
+async def create_video_with_script(request: VideoCreateWithScriptRequest, background_tasks: BackgroundTasks):
+    """Create a new video with pre-approved script"""
+    video_id = str(uuid.uuid4())
+    
+    videos_db[video_id] = {
+        "video_id": video_id,
+        "status": "processing",
+        "progress": 0,
+        "current_stage": "Initializing...",
+        "video_url": None,
+        "youtube_url": None,
+        "created_at": None,
+        "completed_at": None,
+        "error": None,
+        "approved_script": request.script  # Store the approved script
+    }
+    
+    await save_videos_db(videos_db)
+    background_tasks.add_task(process_video_pipeline_with_script, video_id, request)
     
     return {"video_id": video_id, "status": "processing"}
 

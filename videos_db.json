@@ -153,13 +153,50 @@
   },
   "95177e84-a6d8-496c-9641-557c91617e41": {
     "video_id": "95177e84-a6d8-496c-9641-557c91617e41",
-    "status": "processing",
-    "progress": 20,
-    "current_stage": "\ud83c\udfac Recording screen with browser automation...",
-    "video_url": null,
+    "status": "completed",
+    "progress": 100,
+    "current_stage": "\u2705 Video completed successfully!",
+    "video_url": "/api/videos/95177e84-a6d8-496c-9641-557c91617e41/download",
     "youtube_url": null,
     "created_at": "2025-10-10T14:38:49.296596",
-    "completed_at": null,
-    "error": null
+    "completed_at": "2025-10-10T14:47:24.549794",
+    "error": null,
+    "video_path": "videos/final_95177e84-a6d8-496c-9641-557c91617e41.mp4"
+  },
+  "2c931aaa-7e0c-4125-813f-3e64b7a75377": {
+    "video_id": "2c931aaa-7e0c-4125-813f-3e64b7a75377",
+    "status": "completed",
+    "progress": 100,
+    "current_stage": "\u2705 Video completed successfully!",
+    "video_url": "/api/videos/2c931aaa-7e0c-4125-813f-3e64b7a75377/download",
+    "youtube_url": null,
+    "created_at": "2025-10-10T14:56:57.475602",
+    "completed_at": "2025-10-10T15:03:45.296763",
+    "error": null,
+    "video_path": "videos/final_2c931aaa-7e0c-4125-813f-3e64b7a75377.mp4"
+  },
+  "8a300812-3b7a-4b9c-a798-8fbf6a10494d": {
+    "video_id": "8a300812-3b7a-4b9c-a798-8fbf6a10494d",
+    "status": "completed",
+    "progress": 100,
+    "current_stage": "\u2705 Video completed successfully!",
+    "video_url": "/api/videos/8a300812-3b7a-4b9c-a798-8fbf6a10494d/download",
+    "youtube_url": null,
+    "created_at": "2025-10-10T15:09:16.689968",
+    "completed_at": "2025-10-10T15:10:41.011148",
+    "error": null,
+    "video_path": "videos/final_8a300812-3b7a-4b9c-a798-8fbf6a10494d.mp4"
+  },
+  "5577630a-6937-4fb3-89a6-4f714f19b956": {
+    "video_id": "5577630a-6937-4fb3-89a6-4f714f19b956",
+    "status": "completed",
+    "progress": 100,
+    "current_stage": "\u2705 Video completed successfully!",
+    "video_url": "/api/videos/5577630a-6937-4fb3-89a6-4f714f19b956/download",
+    "youtube_url": null,
+    "created_at": "2025-10-10T15:12:15.498226",
+    "completed_at": "2025-10-10T15:19:47.090131",
+    "error": null,
+    "video_path": "videos/final_5577630a-6937-4fb3-89a6-4f714f19b956.mp4"
   }
 }

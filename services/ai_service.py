@@ -41,36 +41,39 @@ class AIService:
         duration_configs = {
             5: {
                 "word_range": "750-900",
-                "structure": """   [00:00-00:20] AÇILIŞ - Projeyi tanıt
-   [00:20-01:30] PROJE TANITIMI - Temel özellikleri açıkla
-   [01:30-03:00] ANA ÖZELLİKLER - 2-3 ana özellik
-   [03:00-04:30] KULLANIM ÖRNEĞİ - Hızlı demo
-   [04:30-05:00] KAPANIŞ - Özet ve vedalaşma"""
+                "flow": """Akış (doğal geçişlerle):
+   İlk 20 saniye: Samimi bir giriş yap, projeyi tanıt
+   1.5 dakika: Temel özelliklerini konuşarak açıkla
+   2.5 dakika: En önemli 2-3 özelliği detaylandır
+   1.5 dakika: Hızlı kullanım örneği göster
+   30 saniye: Özet ve vedalaşma"""
             },
             10: {
                 "word_range": "1500-1800",
-                "structure": """   [00:00-00:30] AÇILIŞ - Projeyi tanıt, ne öğreneceklerini söyle
-   [00:30-02:00] PROJE TANITIMI - Detaylı açıklama
-   [02:00-02:20] GEÇİŞ 1 - Özelliklere geçiş
-   [02:20-05:00] ANA ÖZELLİKLER - 3-4 ana özellik detaylı
-   [05:00-05:20] GEÇİŞ 2 - Demo'ya geçiş
-   [05:20-08:00] DEMO VE KULLANIM - Pratik örnekler
-   [08:00-08:20] GEÇİŞ 3 - Kuruluma geçiş
-   [08:20-09:30] KURULUM REHBERİ - Adım adım kurulum
-   [09:30-10:00] KAPANIŞ - Özet ve vedalaşma"""
+                "flow": """Akış (doğal geçişlerle):
+   İlk 30 saniye: Samimi bir giriş yap, projeyi tanıt, neler öğreneceklerini söyle
+   1.5 dakika: Projeyi detaylı açıkla, arka planını anlat
+   20 saniye: Doğal geçiş - "Şimdi özelliklere bakalım..."
+   2.5 dakika: 3-4 ana özelliği konuşarak, doğal şekilde detaylandır
+   20 saniye: Doğal geçiş - "Bunları pratikte nasıl kullanıyoruz?"
+   2.5 dakika: Pratik kullanım örnekleri göster
+   20 saniye: Doğal geçiş - "Şimdi kuruluma geçelim..."
+   1 dakika: Kurulum adımlarını anlat
+   30 saniye: Özet ve vedalaşma"""
             },
             15: {
                 "word_range": "2250-2700",
-                "structure": """   [00:00-00:30] AÇILIŞ - Projeyi tanıt, ne öğreneceklerini söyle
-   [00:30-02:30] PROJE TANITIMI - Detaylı açıklama ve arka plan
-   [02:30-03:00] GEÇİŞ 1 - Özelliklere geçiş
-   [03:00-06:30] ANA ÖZELLİKLER - 4-5 ana özellik çok detaylı
-   [06:30-07:00] GEÇİŞ 2 - Demo'ya geçiş
-   [07:00-11:00] DEMO VE KULLANIM - Kapsamlı örnekler ve senaryolar
-   [11:00-11:30] GEÇİŞ 3 - Kurulum ve ileri konulara geçiş
-   [11:30-13:30] KURULUM VE İLERİ KONULAR - Detaylı kurulum ve optimizasyon
-   [13:30-14:30] TOPLULUK VE KAYNAKLAR - Dokümantasyon, topluluk desteği
-   [14:30-15:00] KAPANIŞ - Kapsamlı özet ve sonraki adımlar"""
+                "flow": """Akış (doğal geçişlerle):
+   İlk 30 saniye: Samimi bir giriş yap, projeyi tanıt
+   2 dakika: Projeyi detaylı açıkla, arka plan bilgisi ver
+   30 saniye: Doğal geçiş - "Gelin özelliklere bakalım..."
+   3.5 dakika: 4-5 ana özelliği doğal konuşma akışıyla detaylandır
+   30 saniye: Doğal geçiş - "Bunları pratikte görelim..."
+   4 dakika: Kapsamlı kullanım örnekleri ve senaryolar
+   30 saniye: Doğal geçiş - "Şimdi kurulum ve ileri konulara geçelim..."
+   2 dakika: Detaylı kurulum ve optimizasyon ipuçları
+   1 dakika: Topluluk, dokümantasyon ve kaynaklar
+   30 saniye: Kapsamlı özet ve sonraki adımlar"""
             }
         }
         
@@ -97,17 +100,17 @@ Gereksinimler:
 1. Toplam süre: Tam {video_duration} dakika (yaklaşık {config['word_range']} kelime)
 2. Dil: Türkçe, profesyonel ama samimi
 3. Stil: {style} (tutorial/review/quick_start)
-4. Yapı:
-{config['structure']}
+4. Akış rehberi:
+{config['flow']}
 
-5. Her bölüm başlangıcında [timestamp] BAŞLIK formatında yaz
-6. AÇILIŞ, GEÇİŞ ve KAPANIŞ bölümleri avatar ile çekilecek
-7. Diğer bölümler ekran kaydı ile çekilecek
-8. Doğal, akıcı ve eğitici bir dil kullan
-9. Teknik terimleri açıkla
-10. İzleyiciyle bağ kur (sorular sor, örnekler ver)
+5. BÖLÜM BAŞLIKLARI KULLANMA - sadece doğal konuşma akışı
+6. Timestamp veya [zaman] işaretleri kullanma
+7. Konuları doğal geçişlerle birbirine bağla ("Şimdi...", "Gelin bakalım...", "Peki..." gibi)
+8. Sanki birisiyle konuşuyormuş gibi samimi ve akıcı yaz
+9. Teknik terimleri günlük dille açıkla
+10. İzleyiciyle bağ kur (sorular sor, örnekler ver, "siz de..." diye önerilerde bulun)
 
-Script'i şimdi oluştur:
+Doğal, başlıksız ve akıcı scripti şimdi oluştur:
 """
         else:
             # General website prompt
@@ -117,8 +120,8 @@ Script'i şimdi oluştur:
             headings = content_data.get('headings', [])
             headings_text = '\n'.join([f"- {h.get('text', '')}" for h in headings[:10]])
             
-            # Use same structure for websites
-            website_structure = config['structure'].replace('PROJE TANITIMI', 'SİTE TANITIMI').replace('Projeyi tanıt', 'Web sitesini tanıt')
+            # Use same flow structure for websites
+            website_flow = config['flow'].replace('projeyi', 'siteyi').replace('Projeyi', 'Siteyi')
             
             prompt = f"""
 Bir web sitesi hakkında {video_duration} dakikalık Türkçe eğitim/tanıtım videosu scripti oluştur.
@@ -138,17 +141,17 @@ Gereksinimler:
 1. Toplam süre: Tam {video_duration} dakika (yaklaşık {config['word_range']} kelime)
 2. Dil: Türkçe, profesyonel ama samimi
 3. Stil: {style} (tutorial/review/quick_start)
-4. Yapı:
-{website_structure}
+4. Akış rehberi:
+{website_flow}
 
-5. Her bölüm başlangıcında [timestamp] BAŞLIK formatında yaz
-6. AÇILIŞ, GEÇİŞ ve KAPANIŞ bölümleri avatar ile çekilecek
-7. Diğer bölümler ekran kaydı ile çekilecek
-8. Doğal, akıcı ve eğitici bir dil kullan
-9. Teknik terimleri açıkla
-10. İzleyiciyle bağ kur (sorular sor, örnekler ver)
+5. BÖLÜM BAŞLIKLARI KULLANMA - sadece doğal konuşma akışı
+6. Timestamp veya [zaman] işaretleri kullanma
+7. Konuları doğal geçişlerle birbirine bağla ("Şimdi...", "Gelin bakalım...", "Peki..." gibi)
+8. Sanki birisiyle konuşuyormuş gibi samimi ve akıcı yaz
+9. Teknik terimleri günlük dille açıkla
+10. İzleyiciyle bağ kur (sorular sor, örnekler ver, "siz de..." diye önerilerde bulun)
 
-Script'i şimdi oluştur:
+Doğal, başlıksız ve akıcı scripti şimdi oluştur:
 """
         
         if self.provider == "anthropic":
