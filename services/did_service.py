@@ -8,6 +8,7 @@ import httpx
 import asyncio
 import base64
 from pathlib import Path
+from typing import Optional
 
 class DIDService:
     def __init__(self):
@@ -26,7 +27,7 @@ class DIDService:
             "casual_male": "https://d-id-public-bucket.s3.amazonaws.com/mark.jpg"
         }
     
-    async def create_avatar_video(self, text: str, avatar_type: str, custom_image_path: str = None) -> str:
+    async def create_avatar_video(self, text: str, avatar_type: str, custom_image_path: Optional[str] = None) -> str:
         """Create avatar video using D-ID API
         
         Args:

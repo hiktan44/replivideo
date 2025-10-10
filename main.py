@@ -318,6 +318,10 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
         # Use the approved script directly
         script = videos_db[video_id].get("approved_script", request.script)
         
+        # Ensure script is a string (safeguard)
+        if isinstance(script, dict):
+            script = script.get("full_text", str(script))
+        
         if request.mode == "custom_avatar_overlay":
             # Custom avatar overlay pipeline with approved script
             await update_progress(video_id, 10, "🎬 Recording screen with browser automation...")
@@ -344,7 +348,7 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
             from services.did_service import DIDService
             did_service = DIDService()
             avatar_video = await did_service.create_avatar_video(
-                text=script[:500],  # D-ID has text limit
+                text=str(script)[:500],  # D-ID has text limit, ensure string
                 avatar_type=request.avatar_type,
                 custom_image_path=custom_image_path
             )
@@ -464,7 +468,7 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             from services.did_service import DIDService
             did_service = DIDService()
             avatar_video = await did_service.create_avatar_video(
-                text=script[:500],  # D-ID has text limit
+                text=str(script)[:500],  # D-ID has text limit, ensure string
                 avatar_type=request.avatar_type,
                 custom_image_path=custom_image_path
             )
