@@ -1381,30 +1381,43 @@ async def preview_script(request: ScriptPreviewRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Script oluşturulamadı: {str(e)}")
 
+@app.post("/api/uploads/test")
+async def test_upload():
+    """Simple test endpoint"""
+    return {"status": "ok", "message": "Upload endpoint is reachable"}
+
 @app.post("/api/uploads/image")
 async def upload_avatar_image(file: UploadFile = File(...)):
     """Upload custom avatar photo for overlay"""
     try:
+        print(f"📤 Upload başladı: {file.filename}, content_type: {file.content_type}")
+        
         # Validate file type
         if not file.content_type in ["image/jpeg", "image/jpg", "image/png"]:
             raise HTTPException(status_code=400, detail="Sadece JPG/PNG dosyaları desteklenir")
         
         # Read file content
+        print("📖 Dosya okunuyor...")
         content = await file.read()
+        print(f"✅ Dosya okundu: {len(content)} bytes")
         
         # Validate file size (max 5MB)
         if len(content) > 5 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="Dosya boyutu 5MB'dan küçük olmalıdır")
         
         # Validate image and get dimensions
+        print("🖼️ Resim doğrulanıyor...")
         try:
+            # First verify it's a valid image
+            img = Image.open(io.BytesIO(content))
+            img.verify()
+            
+            # Re-open to get dimensions (verify() closes the file)
             img = Image.open(io.BytesIO(content))
             width, height = img.size
-            
-            # Ensure it's a valid image
-            img.verify()
+            print(f"✅ Resim geçerli: {width}x{height}")
         except Exception as e:
-            raise HTTPException(status_code=400, detail="Geçersiz resim dosyası")
+            raise HTTPException(status_code=400, detail=f"Geçersiz resim dosyası: {str(e)}")
         
         # Generate unique ID for the image
         image_id = str(uuid.uuid4())
@@ -1417,20 +1430,13 @@ async def upload_avatar_image(file: UploadFile = File(...)):
         file_ext = "jpg" if file.content_type == "image/jpeg" else "png"
         file_path = upload_dir / f"{image_id}.{file_ext}"
         
+        print(f"💾 Dosya kaydediliyor: {file_path}")
         with open(file_path, "wb") as f:
             f.write(content)
+        print("✅ Dosya kaydedildi")
         
-        # Store in videos_db for tracking
-        async with db_lock:
-            videos_db[f"upload_{image_id}"] = {
-                "type": "upload",
-                "image_id": image_id,
-                "file_path": str(file_path),
-                "uploaded_at": datetime.now().isoformat(),
-                "dimensions": {"width": width, "height": height}
-            }
-            await save_videos_db(videos_db)
-        
+        # Don't save to DB for now - just return success
+        print(f"✅ Upload tamamlandı: {image_id}")
         return {
             "image_id": image_id,
             "file_path": str(file_path),
@@ -1441,6 +1447,7 @@ async def upload_avatar_image(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ Upload hatası: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Yükleme hatası: {str(e)}")
 
 @app.post("/api/videos/create")
