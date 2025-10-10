@@ -8,7 +8,18 @@ The application provides a REST API and web interface for submitting any web URL
 
 ## Recent Changes (October 2025)
 
-**NEW: Screen Recording Mode** (Latest - Oct 10):
+**NEW: Script Preview & Editing** (Latest - Oct 10):
+- ✅ Implemented script preview workflow - users can review AI-generated scripts before video creation
+- ✅ Added `/api/scripts/preview` endpoint for generating scripts without creating videos
+- ✅ Added `/api/videos/create-with-script` endpoint for creating videos with pre-approved scripts
+- ✅ Removed section headers from scripts for natural conversational flow
+- ✅ Updated AI prompts to generate seamless, natural Turkish narration without timestamps or section markers
+- ✅ Enhanced frontend with script preview panel, textarea editing, and approve/cancel buttons
+- ✅ Added sub-page navigation to ScreenRecorderService - automatically clicks internal links
+- ✅ Fixed download button to trigger immediate file download (onclick method)
+- ✅ **User Experience**: Full control over script content before video generation starts
+
+**Screen Recording Mode** (Oct 10):
 - ✅ Implemented Playwright-based browser automation for fast video generation
 - ✅ Created `ScreenRecorderService` with automated web navigation and scrolling
 - ✅ Added Nix Chromium integration (bypasses Playwright's bundled browser dependency issues)
