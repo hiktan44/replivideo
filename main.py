@@ -77,6 +77,7 @@ class ScriptPreviewRequest(BaseModel):
     url: HttpUrl
     video_style: str = "tutorial"
     video_duration: int = 10
+    custom_prompt: Optional[str] = None
 
 class ScriptPreviewResponse(BaseModel):
     script: str
@@ -93,6 +94,7 @@ class VideoCreateWithScriptRequest(BaseModel):
     video_duration: int = 10
     mode: str = "avatar"
     scroll_speed: str = "medium"
+    custom_prompt: Optional[str] = None
 
 class GitHubAnalyzer:
     """GitHub repository analysis service"""
@@ -492,6 +494,15 @@ async def home():
                         <p class="text-xs text-gray-500 mt-1">✨ Herhangi bir web sitesi URL'i girin - otomatik analiz edilecek!</p>
                     </div>
                     
+                    <!-- Custom Prompt/Instructions -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">💬 Özel Talimatlar (İsteğe Bağlı)</label>
+                        <textarea id="customPrompt" rows="3" 
+                                  placeholder="Örnek: 'Videoda başlangıç seviyesindeki kullanıcılara odaklan', 'Kod örneklerini detaylı açıkla', 'Kurulum adımlarını tek tek göster'..." 
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">💡 AI'a özel isteklerinizi yazın - script buna göre hazırlanacak!</p>
+                    </div>
+                    
                     <!-- Video Mode Selection -->
                     <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">🎥 Video Oluşturma Modu</label>
@@ -807,10 +818,13 @@ async def home():
             
             currentVideoUrl = url;
             
+            const customPrompt = document.getElementById('customPrompt').value.trim();
+            
             const data = {
                 url: url,
                 video_style: document.getElementById('commonVideoStyle').value,
-                video_duration: parseInt(document.getElementById('commonDuration').value)
+                video_duration: parseInt(document.getElementById('commonDuration').value),
+                custom_prompt: customPrompt || null
             };
             
             // Show script preview panel
@@ -852,6 +866,7 @@ async def home():
             }
             
             const mode = document.getElementById('videoMode').value;
+            const customPrompt = document.getElementById('customPrompt').value.trim();
             
             const data = {
                 url: currentVideoUrl,
@@ -862,7 +877,8 @@ async def home():
                 voice_type: document.getElementById('commonVoiceType').value,
                 video_style: document.getElementById('commonVideoStyle').value,
                 provider: mode === 'avatar' ? document.getElementById('provider').value : 'heygen',
-                video_duration: parseInt(document.getElementById('commonDuration').value)
+                video_duration: parseInt(document.getElementById('commonDuration').value),
+                custom_prompt: customPrompt || null
             };
             
             try {
@@ -1069,7 +1085,8 @@ async def preview_script(request: ScriptPreviewRequest):
         script = await ai_service.generate_turkish_script(
             content_data,
             request.video_style,
-            request.video_duration
+            request.video_duration,
+            custom_prompt=request.custom_prompt
         )
         
         return ScriptPreviewResponse(

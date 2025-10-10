@@ -22,13 +22,14 @@ class AIService:
         else:
             self.provider = "demo"
     
-    async def generate_turkish_script(self, content_data: Dict, style: str, video_duration: int = 10) -> str:
+    async def generate_turkish_script(self, content_data: Dict, style: str, video_duration: int = 10, custom_prompt: str = None) -> str:
         """Generate Turkish video script based on duration
         
         Args:
             content_data: Content/repository data
             style: Video style (tutorial, review, quick_start)
             video_duration: Video duration in minutes (5, 10, or 15)
+            custom_prompt: Optional custom instructions from user
         """
         
         if self.provider == "demo":
@@ -109,6 +110,13 @@ Gereksinimler:
 8. Sanki birisiyle konuşuyormuş gibi samimi ve akıcı yaz
 9. Teknik terimleri günlük dille açıkla
 10. İzleyiciyle bağ kur (sorular sor, örnekler ver, "siz de..." diye önerilerde bulun)
+{f'''
+
+ÖNEMLİ - KULLANICININ ÖZEL TALİMATLARI:
+{custom_prompt}
+
+Bu talimatları mutlaka dikkate al ve script'i buna göre hazırla!
+''' if custom_prompt else ''}
 
 Doğal, başlıksız ve akıcı scripti şimdi oluştur:
 """
@@ -150,6 +158,13 @@ Gereksinimler:
 8. Sanki birisiyle konuşuyormuş gibi samimi ve akıcı yaz
 9. Teknik terimleri günlük dille açıkla
 10. İzleyiciyle bağ kur (sorular sor, örnekler ver, "siz de..." diye önerilerde bulun)
+{f'''
+
+ÖNEMLİ - KULLANICININ ÖZEL TALİMATLARI:
+{custom_prompt}
+
+Bu talimatları mutlaka dikkate al ve script'i buna göre hazırla!
+''' if custom_prompt else ''}
 
 Doğal, başlıksız ve akıcı scripti şimdi oluştur:
 """
