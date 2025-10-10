@@ -1038,8 +1038,14 @@ async def home():
                 });
                 
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || 'Fotoğraf yüklenemedi');
+                    let errorMsg = 'Fotoğraf yüklenemedi';
+                    try {
+                        const error = await response.json();
+                        errorMsg = error.detail || errorMsg;
+                    } catch (e) {
+                        errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorMsg);
                 }
                 
                 const result = await response.json();
@@ -1050,7 +1056,7 @@ async def home():
             } catch (error) {
                 console.error('Photo upload error:', error);
                 uploadStatus.className = 'mt-2 text-sm text-red-600';
-                uploadStatus.textContent = '❌ Hata: ' + error.message;
+                uploadStatus.textContent = '❌ Hata: ' + (error.message || 'Bilinmeyen hata');
                 uploadedPhotoId = null;
             }
         }
