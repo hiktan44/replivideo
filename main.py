@@ -666,12 +666,14 @@ async def home():
                     <div id="customAvatarUpload" class="hidden mb-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">📷 Fotoğrafınızı Yükleyin</label>
                         <input type="file" id="avatarPhoto" accept="image/jpeg,image/png,image/jpg" 
+                               onchange="handlePhotoUpload()"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white">
                         <p class="text-xs text-purple-600 mt-2">✨ Fotoğrafınız konuşacak ve videonun köşesinde yuvarlak çerçevede görünecek! (Max 5MB, JPG/PNG)</p>
                         <div id="photoPreview" class="mt-3 hidden">
                             <p class="text-sm text-gray-600 mb-2">Önizleme:</p>
                             <img id="photoPreviewImg" class="w-24 h-24 rounded-full object-cover border-4 border-purple-400" />
                         </div>
+                        <div id="uploadStatus" class="mt-2 hidden text-sm"></div>
                     </div>
                     
                     <!-- Scroll Speed (for screen recording) -->
@@ -997,6 +999,61 @@ async def home():
         window.addEventListener('DOMContentLoaded', checkApiStatus);
         
         let currentScript = null;
+        let uploadedPhotoId = null; // Store uploaded photo ID
+        
+        async function handlePhotoUpload() {
+            const photoInput = document.getElementById('avatarPhoto');
+            const file = photoInput.files[0];
+            const uploadStatus = document.getElementById('uploadStatus');
+            const photoPreview = document.getElementById('photoPreview');
+            const photoPreviewImg = document.getElementById('photoPreviewImg');
+            
+            if (!file) {
+                uploadedPhotoId = null;
+                photoPreview.classList.add('hidden');
+                uploadStatus.classList.add('hidden');
+                return;
+            }
+            
+            // Show preview immediately
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                photoPreviewImg.src = e.target.result;
+                photoPreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload photo to server
+            uploadStatus.classList.remove('hidden');
+            uploadStatus.className = 'mt-2 text-sm text-blue-600';
+            uploadStatus.textContent = '⏳ Fotoğraf yükleniyor...';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/uploads/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Fotoğraf yüklenemedi');
+                }
+                
+                const result = await response.json();
+                uploadedPhotoId = result.image_id;
+                
+                uploadStatus.className = 'mt-2 text-sm text-green-600';
+                uploadStatus.textContent = '✅ Fotoğraf başarıyla yüklendi!';
+            } catch (error) {
+                console.error('Photo upload error:', error);
+                uploadStatus.className = 'mt-2 text-sm text-red-600';
+                uploadStatus.textContent = '❌ Hata: ' + error.message;
+                uploadedPhotoId = null;
+            }
+        }
         
         async function previewScript() {
             const url = document.getElementById('githubUrl').value;
@@ -1062,14 +1119,14 @@ async def home():
             const mode = document.getElementById('videoMode').value;
             const customPrompt = document.getElementById('customPrompt').value.trim();
             
-            // Upload photo if custom_avatar_overlay mode
+            // Check if photo is uploaded for custom_avatar_overlay mode
             let customAvatarImageId = null;
             if (mode === 'custom_avatar_overlay') {
-                customAvatarImageId = await uploadPhoto();
-                if (!customAvatarImageId) {
-                    alert('Lütfen bir fotoğraf yükleyin!');
+                if (!uploadedPhotoId) {
+                    alert('Lütfen önce bir fotoğraf yükleyin!');
                     return;
                 }
+                customAvatarImageId = uploadedPhotoId;
             }
             
             const data = {
@@ -1132,35 +1189,6 @@ async def home():
             document.body.removeChild(a);
         }
         
-        async function uploadPhoto() {
-            const photoInput = document.getElementById('avatarPhoto');
-            const file = photoInput.files[0];
-            
-            if (!file) return null;
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            try {
-                const response = await fetch('/api/uploads/image', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || 'Fotoğraf yüklenemedi');
-                }
-                
-                const result = await response.json();
-                return result.image_id;
-            } catch (error) {
-                console.error('Photo upload error:', error);
-                alert('Fotoğraf yüklenirken hata: ' + error.message);
-                return null;
-            }
-        }
-        
         async function createVideo() {
             const url = document.getElementById('githubUrl').value;
             if (!url) {
@@ -1177,14 +1205,14 @@ async def home():
             
             const mode = document.getElementById('videoMode').value;
             
-            // Upload photo if custom_avatar_overlay mode
+            // Check if photo is uploaded for custom_avatar_overlay mode
             let customAvatarImageId = null;
             if (mode === 'custom_avatar_overlay') {
-                customAvatarImageId = await uploadPhoto();
-                if (!customAvatarImageId) {
-                    alert('Lütfen bir fotoğraf yükleyin!');
+                if (!uploadedPhotoId) {
+                    alert('Lütfen önce bir fotoğraf yükleyin!');
                     return;
                 }
+                customAvatarImageId = uploadedPhotoId;
             }
             
             const data = {
