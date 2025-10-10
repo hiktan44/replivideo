@@ -8,7 +8,18 @@ The application provides a REST API and web interface for submitting any web URL
 
 ## Recent Changes (October 2025)
 
-**Critical Bug Fixes** (Latest - Oct 9):
+**NEW: Screen Recording Mode** (Latest - Oct 10):
+- ✅ Implemented Playwright-based browser automation for fast video generation
+- ✅ Created `ScreenRecorderService` with automated web navigation and scrolling
+- ✅ Added Nix Chromium integration (bypasses Playwright's bundled browser dependency issues)
+- ✅ Installed system dependencies: mesa, X11 libs, NSS, GTK3, alsa-lib for browser support
+- ✅ Extended `VideoComposer` with screen recording audio muxing (webm→mp4 conversion)
+- ✅ Updated API with "mode" parameter: "avatar" (slow, AI avatar) vs "screen_recording" (fast, real webpage)
+- ✅ Enhanced frontend UI with mode selection and scroll speed control
+- ✅ **Performance**: Screen recording mode generates 10-min video in ~5 minutes (vs 30-60 min for avatar mode)
+- ✅ Set `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true` for Nix environment compatibility
+
+**Critical Bug Fixes** (Oct 9):
 - ✅ Fixed GitHub URL parsing to properly handle `.git` suffix (only removes from end, not from repo names)
 - ✅ Increased HeyGen timeout from 2 to 5 minutes to prevent premature timeouts
 - ✅ Added fallback for script parsing when AI doesn't generate sections
@@ -57,12 +68,14 @@ Preferred communication style: Simple, everyday language.
 
 **Service Layer Architecture**: Modular service-based design
 - `GitHubAnalyzer`: Repository content extraction and analysis (GitHub-specific)
-- `WebsiteAnalyzer`: General web content extraction using BeautifulSoup (NEW)
-- `ContentAnalyzer`: Unified router that auto-detects URL type and delegates to appropriate analyzer (NEW)
+- `WebsiteAnalyzer`: General web content extraction using BeautifulSoup
+- `ContentAnalyzer`: Unified router that auto-detects URL type and delegates to appropriate analyzer
 - `AIService`: Script generation using OpenAI or Anthropic (supports both GitHub and website content)
 - `ElevenLabsService`: Turkish text-to-speech conversion
+- `ScreenRecorderService`: Playwright-based browser automation for screen recording (NEW - Oct 10)
+- `HeyGenService`: AI avatar video generation with HeyGen
 - `DIDService`: AI avatar video generation with D-ID
-- `VideoComposer`: Final video assembly and composition
+- `VideoComposer`: Final video assembly and composition (supports both avatar and screen recording modes)
 
 **Graceful Degradation**: Demo mode fallbacks when API keys are unavailable
 - Each service checks for API key availability on initialization

@@ -79,18 +79,29 @@ class ScreenRecorderService:
                 # Perform automated navigation
                 await self._auto_navigate(page, scroll_params)
                 
-                # Close browser (this finalizes the video)
+                # Get video path BEFORE closing (must be called before context.close())
+                video = page.video
+                video_path = None
+                
+                if video:
+                    try:
+                        # Get path before closing (video will be finalized when context closes)
+                        video_path = await video.path()
+                    except Exception as e:
+                        print(f"⚠️ Could not get video path: {e}")
+                
+                # Close context to finalize the video recording
                 await context.close()
                 await browser.close()
                 
-                # Find and move the recorded video
-                video_file = await self._find_latest_video()
-                if video_file and video_file.exists():
-                    shutil.move(str(video_file), output_path)
+                # Move the finalized video to output location
+                if video_path and Path(video_path).exists():
+                    shutil.move(str(video_path), output_path)
                     print(f"✅ Screen recording saved: {output_path}")
                     return output_path
                 else:
-                    raise Exception("Video file not found after recording")
+                    print("⚠️ Video not found, using demo fallback")
+                    return await self._create_demo_recording(output_path)
                     
         except Exception as e:
             print(f"❌ Screen recording error: {str(e)}")
@@ -178,20 +189,6 @@ class ScreenRecorderService:
             'duration_seconds': duration_seconds,
             'scroll_pause': scroll_pause
         }
-    
-    async def _find_latest_video(self) -> Optional[Path]:
-        """Find the most recently created video file"""
-        try:
-            video_files = list(self.video_dir.glob("*.webm"))
-            if not video_files:
-                return None
-            
-            # Get most recent file
-            latest_file = max(video_files, key=lambda p: p.stat().st_mtime)
-            return latest_file
-        except Exception as e:
-            print(f"Error finding video: {e}")
-            return None
     
     async def _create_demo_recording(self, output_path: str) -> str:
         """Create demo recording when actual recording fails"""

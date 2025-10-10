@@ -139,5 +139,27 @@
     "created_at": "2025-10-10T14:30:56.149891",
     "completed_at": null,
     "error": null
+  },
+  "24e82c0c-5035-49ac-b235-7154f2608d49": {
+    "video_id": "24e82c0c-5035-49ac-b235-7154f2608d49",
+    "status": "processing",
+    "progress": 20,
+    "current_stage": "\ud83c\udfac Recording screen with browser automation...",
+    "video_url": null,
+    "youtube_url": null,
+    "created_at": "2025-10-10T14:36:57.025258",
+    "completed_at": null,
+    "error": null
+  },
+  "95177e84-a6d8-496c-9641-557c91617e41": {
+    "video_id": "95177e84-a6d8-496c-9641-557c91617e41",
+    "status": "processing",
+    "progress": 20,
+    "current_stage": "\ud83c\udfac Recording screen with browser automation...",
+    "video_url": null,
+    "youtube_url": null,
+    "created_at": "2025-10-10T14:38:49.296596",
+    "completed_at": null,
+    "error": null
   }
 }
