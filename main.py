@@ -3,7 +3,7 @@ AI Avatar Video Maker - Replit Complete Application
 Generates 10-minute Turkish tutorial videos from GitHub repositories
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +17,9 @@ from datetime import datetime
 import httpx
 import base64
 from pathlib import Path
+import shutil
+from PIL import Image
+import io
 
 app = FastAPI(title="AI Avatar Video Maker", version="1.0.0")
 
@@ -59,9 +62,10 @@ class VideoCreateRequest(BaseModel):
     video_style: str = "tutorial"
     provider: str = "heygen"  # "did" or "heygen"
     video_duration: int = 10  # 5, 10, or 15 minutes
-    mode: str = "avatar"  # "avatar" or "screen_recording"
+    mode: str = "avatar"  # "avatar", "screen_recording", or "custom_avatar_overlay"
     scroll_speed: str = "medium"  # For screen recording: "slow", "medium", "fast"
     custom_prompt: Optional[str] = None
+    custom_avatar_image_id: Optional[str] = None  # For custom_avatar_overlay mode
 
 class VideoStatusResponse(BaseModel):
     video_id: str
@@ -96,6 +100,7 @@ class VideoCreateWithScriptRequest(BaseModel):
     mode: str = "avatar"
     scroll_speed: str = "medium"
     custom_prompt: Optional[str] = None
+    custom_avatar_image_id: Optional[str] = None  # For custom_avatar_overlay mode
 
 class GitHubAnalyzer:
     """GitHub repository analysis service"""
@@ -788,7 +793,7 @@ async def home():
                     const file = e.target.files[0];
                     if (file) {
                         if (file.size > 5 * 1024 * 1024) {
-                            alert('Dosya boyutu 5MB\'dan küçük olmalıdır!');
+                            alert('Dosya boyutu 5MB' + String.fromCharCode(39) + 'dan küçük olmalıdır!');
                             photoInput.value = '';
                             return;
                         }
@@ -1144,6 +1149,68 @@ async def preview_script(request: ScriptPreviewRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Script oluşturulamadı: {str(e)}")
+
+@app.post("/api/uploads/image")
+async def upload_avatar_image(file: UploadFile = File(...)):
+    """Upload custom avatar photo for overlay"""
+    try:
+        # Validate file type
+        if not file.content_type in ["image/jpeg", "image/jpg", "image/png"]:
+            raise HTTPException(status_code=400, detail="Sadece JPG/PNG dosyaları desteklenir")
+        
+        # Read file content
+        content = await file.read()
+        
+        # Validate file size (max 5MB)
+        if len(content) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Dosya boyutu 5MB'dan küçük olmalıdır")
+        
+        # Validate image and get dimensions
+        try:
+            img = Image.open(io.BytesIO(content))
+            width, height = img.size
+            
+            # Ensure it's a valid image
+            img.verify()
+        except Exception as e:
+            raise HTTPException(status_code=400, detail="Geçersiz resim dosyası")
+        
+        # Generate unique ID for the image
+        image_id = str(uuid.uuid4())
+        
+        # Create uploads directory if it doesn't exist
+        upload_dir = Path("videos/uploads")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save the image
+        file_ext = "jpg" if file.content_type == "image/jpeg" else "png"
+        file_path = upload_dir / f"{image_id}.{file_ext}"
+        
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        # Store in videos_db for tracking
+        async with db_lock:
+            videos_db[f"upload_{image_id}"] = {
+                "type": "upload",
+                "image_id": image_id,
+                "file_path": str(file_path),
+                "uploaded_at": datetime.now().isoformat(),
+                "dimensions": {"width": width, "height": height}
+            }
+            await save_videos_db(videos_db)
+        
+        return {
+            "image_id": image_id,
+            "file_path": str(file_path),
+            "dimensions": {"width": width, "height": height},
+            "message": "Fotoğraf başarıyla yüklendi!"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Yükleme hatası: {str(e)}")
 
 @app.post("/api/videos/create")
 async def create_video(request: VideoCreateRequest, background_tasks: BackgroundTasks):
