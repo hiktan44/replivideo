@@ -12,6 +12,9 @@ import shutil
 
 class ScreenRecorderService:
     def __init__(self):
+        # Skip Playwright host validation (Nix environment compatibility)
+        os.environ['PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS'] = 'true'
+        
         self.enabled = True
         self.video_dir = Path("videos/recordings")
         self.video_dir.mkdir(parents=True, exist_ok=True)
@@ -43,7 +46,15 @@ class ScreenRecorderService:
                 print(f"🎬 Starting browser automation for {url}...")
                 
                 # Launch browser with video recording
+                # Use system Chromium (Nix) with all dependencies
+                import subprocess
+                try:
+                    chromium_path = subprocess.check_output(['which', 'chromium'], text=True).strip()
+                except subprocess.CalledProcessError:
+                    chromium_path = None
+                
                 browser = await p.chromium.launch(
+                    executable_path=chromium_path if chromium_path else None,
                     headless=True,
                     args=['--no-sandbox', '--disable-setuid-sandbox']
                 )

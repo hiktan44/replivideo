@@ -4,7 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["ffmpeg-full", "gitFull", "libxcrypt", "playwright-driver", "chromium", "nss", "nspr", "atk", "cups", "libdrm", "gtk3", "pango", "alsa-lib", "libxkbcommon", "mesa"]
+packages = ["ffmpeg-full", "gitFull", "libxcrypt", "playwright-driver", "chromium", "nss", "nspr", "atk", "cups", "libdrm", "gtk3", "pango", "alsa-lib", "libxkbcommon", "mesa", "xorg.libX11", "xorg.libXrandr", "xorg.libxcb", "xorg.libXcomposite", "dbus", "expat", "at-spi2-atk", "at-spi2-core"]
 
 [workflows]
 runButton = "Project"
@@ -33,10 +33,6 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 37767
-externalPort = 3001
 
 [[ports]]
 localPort = 45005
