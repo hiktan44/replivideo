@@ -8,6 +8,15 @@ The application provides a REST API and web interface for submitting any web URL
 
 ## Recent Changes (October 2025)
 
+**Critical Issue - API Quota Management** (Oct 10 - Evening):
+- ⚠️ ElevenLabs quota critically low (2204 credits remaining)
+- ⚠️ Demo mode fallback creates empty 5-second videos with no audio/visuals
+- ⚠️ Users experiencing: 5-second blank videos with no sound or avatar
+- 🔧 **Recommended**: Use Replit integrations for better API key management
+- 🔧 **Immediate fix**: Top up ElevenLabs credits or switch to alternative TTS
+
+## Recent Changes (October 2025)
+
 **NEW: Custom Photo Avatar Overlay** (Latest - Oct 10):
 - ✅ Implemented custom photo upload feature - users can upload their own photo to create personalized talking avatar
 - ✅ Added `/api/uploads/image` endpoint with image validation (5MB max, JPG/PNG only)
