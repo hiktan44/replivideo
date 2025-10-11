@@ -10,17 +10,24 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (October 11, 2025)
 
-**Document AI Script Fix** (Latest):
+**HeyGen Custom Avatar Bug Fix** (Latest):
+- ✅ Fixed critical error: "string indices must be integers, not 'str'" when using custom photos with HeyGen
+- ✅ Added Pydantic validator to enforce D-ID provider when custom_avatar_image_id is provided
+- ✅ Frontend now auto-switches to D-ID when custom photo is uploaded
+- ✅ Added warning message: "⚠️ Önemli: Kendi fotoğrafınız için Provider'da D-ID seçili olmalı (HeyGen desteklemiyor)"
+- ✅ Avatar mode now properly supports custom photos with automatic D-ID selection
+
+**Document AI Script Fix**:
 - ✅ Added document-specific AI prompts in `AIService` - scripts now correctly describe "doküman içeriği" instead of "web sitesi tanıtımı"
 - ✅ Document flow replaces generic terms: "projeyi" → "dokümanı", "özelliklere" → "içeriğe", "kurulum" → "önemli noktalara"
 - ✅ Demo script updated to handle `is_document` flag with appropriate Turkish phrasing
 
-**Custom Photo Avatar for Documents** (Latest):
+**Custom Photo Avatar for Documents**:
 - ✅ Avatar mode now supports `custom_avatar_image_id` for both URLs and documents
 - ✅ Frontend updated to show custom photo upload option in avatar mode
 - ✅ Both pipelines (with/without script preview) detect custom images and use D-ID with custom photos
 
-**Video Loop Composer - 500 Character Bug Fix** (Latest):
+**Video Loop Composer - 500 Character Bug Fix**:
 - ✅ Added `compose_video_with_loop()` function in `VideoComposer` to loop short avatar clips
 - ✅ Uses ffprobe to detect audio duration and loops avatar video with `-stream_loop -1 -t <duration>`
 - ✅ Custom photo avatars now generate full 10-minute videos matching complete audio narration
