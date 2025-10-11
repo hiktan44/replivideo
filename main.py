@@ -1097,7 +1097,7 @@ async def home():
             if (file.size > 10 * 1024 * 1024) {
                 uploadStatus.classList.remove('hidden');
                 uploadStatus.className = 'mt-3 text-sm text-red-600';
-                uploadStatus.textContent = '❌ Dosya boyutu 10MB\'dan küçük olmalıdır!';
+                uploadStatus.textContent = '❌ Dosya boyutu 10MB' + String.fromCharCode(39) + 'dan küçük olmalıdır!';
                 documentFile.value = '';
                 uploadedDocumentId = null;
                 return;
