@@ -873,6 +873,7 @@ async def home():
                                onchange="handlePhotoUpload()"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white">
                         <p class="text-xs text-purple-600 mt-2">✨ Fotoğrafınız konuşacak ve videonun köşesinde yuvarlak çerçevede görünecek! (Max 5MB, JPG/PNG)</p>
+                        <p class="text-xs text-amber-600 mt-1 font-medium">⚠️ Önemli: Kendi fotoğrafınız için Provider'da "D-ID" seçili olmalı (HeyGen desteklemiyor)</p>
                         <div id="photoPreview" class="mt-3 hidden">
                             <p class="text-sm text-gray-600 mb-2">Önizleme:</p>
                             <img id="photoPreviewImg" class="w-24 h-24 rounded-full object-cover border-4 border-purple-400" />
@@ -1374,8 +1375,16 @@ async def home():
                 const result = await response.json();
                 uploadedPhotoId = result.image_id;
                 
-                uploadStatus.className = 'mt-2 text-sm text-green-600';
-                uploadStatus.textContent = '✅ Fotoğraf başarıyla yüklendi!';
+                // Automatically switch to D-ID provider (required for custom avatars)
+                const providerSelect = document.getElementById('provider');
+                if (providerSelect && providerSelect.value !== 'did') {
+                    providerSelect.value = 'did';
+                    uploadStatus.className = 'mt-2 text-sm text-green-600';
+                    uploadStatus.textContent = '✅ Fotoğraf yüklendi! Provider otomatik D-ID\'ye ayarlandı.';
+                } else {
+                    uploadStatus.className = 'mt-2 text-sm text-green-600';
+                    uploadStatus.textContent = '✅ Fotoğraf başarıyla yüklendi!';
+                }
             } catch (error) {
                 console.error('Photo upload error:', error);
                 uploadStatus.className = 'mt-2 text-sm text-red-600';
@@ -1469,7 +1478,7 @@ async def home():
             const mode = document.getElementById('videoMode').value;
             const customPrompt = document.getElementById('customPrompt').value.trim();
             
-            // Check if photo is uploaded for custom_avatar_overlay mode
+            // Check if photo is uploaded for custom_avatar_overlay mode or avatar mode with photo
             let customAvatarImageId = null;
             if (mode === 'custom_avatar_overlay') {
                 if (!uploadedPhotoId) {
@@ -1477,6 +1486,19 @@ async def home():
                     return;
                 }
                 customAvatarImageId = uploadedPhotoId;
+            } else if (mode === 'avatar' && uploadedPhotoId) {
+                // Avatar mode also supports custom photos
+                customAvatarImageId = uploadedPhotoId;
+            }
+            
+            // Determine provider: force D-ID if custom avatar, otherwise use selected
+            let provider;
+            if (customAvatarImageId) {
+                provider = 'did';  // Custom avatars require D-ID
+            } else if (mode === 'avatar') {
+                provider = document.getElementById('provider').value;
+            } else {
+                provider = 'heygen';
             }
             
             const data = {
@@ -1486,7 +1508,7 @@ async def home():
                 avatar_type: mode === 'avatar' ? document.getElementById('avatarType').value : 'professional_female',
                 voice_type: document.getElementById('commonVoiceType').value,
                 video_style: document.getElementById('commonVideoStyle').value,
-                provider: mode === 'avatar' ? document.getElementById('provider').value : 'heygen',
+                provider: provider,
                 video_duration: parseInt(document.getElementById('commonDuration').value),
                 custom_prompt: customPrompt || null,
                 custom_avatar_image_id: customAvatarImageId
@@ -1571,7 +1593,7 @@ async def home():
             
             const mode = document.getElementById('videoMode').value;
             
-            // Check if photo is uploaded for custom_avatar_overlay mode
+            // Check if photo is uploaded for custom_avatar_overlay mode or avatar mode with photo
             let customAvatarImageId = null;
             if (mode === 'custom_avatar_overlay') {
                 if (!uploadedPhotoId) {
@@ -1579,6 +1601,19 @@ async def home():
                     return;
                 }
                 customAvatarImageId = uploadedPhotoId;
+            } else if (mode === 'avatar' && uploadedPhotoId) {
+                // Avatar mode also supports custom photos
+                customAvatarImageId = uploadedPhotoId;
+            }
+            
+            // Determine provider: force D-ID if custom avatar, otherwise use selected
+            let provider;
+            if (customAvatarImageId) {
+                provider = 'did';  // Custom avatars require D-ID
+            } else if (mode === 'avatar') {
+                provider = document.getElementById('provider').value;
+            } else {
+                provider = 'heygen';
             }
             
             const data = {
@@ -1587,7 +1622,7 @@ async def home():
                 avatar_type: mode === 'avatar' ? document.getElementById('avatarType').value : 'professional_female',
                 voice_type: document.getElementById('commonVoiceType').value,
                 video_style: document.getElementById('commonVideoStyle').value,
-                provider: mode === 'avatar' ? document.getElementById('provider').value : 'heygen',
+                provider: provider,
                 video_duration: parseInt(document.getElementById('commonDuration').value),
                 custom_avatar_image_id: customAvatarImageId
             };
