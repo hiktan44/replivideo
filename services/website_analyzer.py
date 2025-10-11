@@ -125,3 +125,9 @@ class ContentAnalyzer:
         
         # Use general website analysis
         return await WebsiteAnalyzer.analyze_website(url)
+    
+    @staticmethod
+    async def analyze_document(document_path: str, filename: str) -> Dict:
+        """Analyze uploaded document"""
+        from services.document_analyzer import DocumentAnalyzer
+        return await DocumentAnalyzer.analyze_document(document_path, filename)

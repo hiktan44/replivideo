@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, model_validator
 from typing import Optional, Dict, List
 import os
 import uuid
@@ -20,6 +20,7 @@ from pathlib import Path
 import shutil
 from PIL import Image
 import io
+from services.document_analyzer import DocumentAnalyzer
 
 app = FastAPI(title="AI Avatar Video Maker", version="1.0.0")
 
@@ -56,7 +57,8 @@ async def save_videos_db(db: Dict):
 videos_db = load_videos_db()
 
 class VideoCreateRequest(BaseModel):
-    url: HttpUrl
+    url: Optional[HttpUrl] = None
+    document_id: Optional[str] = None
     avatar_type: str = "professional_female"
     voice_type: str = "tr_female_professional"
     video_style: str = "tutorial"
@@ -66,6 +68,14 @@ class VideoCreateRequest(BaseModel):
     scroll_speed: str = "medium"  # For screen recording: "slow", "medium", "fast"
     custom_prompt: Optional[str] = None
     custom_avatar_image_id: Optional[str] = None  # For custom_avatar_overlay mode
+    
+    @model_validator(mode='after')
+    def validate_source(self):
+        if not self.url and not self.document_id:
+            raise ValueError("Either url or document_id must be provided")
+        if self.url and self.document_id:
+            raise ValueError("Cannot provide both url and document_id")
+        return self
 
 class VideoStatusResponse(BaseModel):
     video_id: str
@@ -79,18 +89,29 @@ class VideoStatusResponse(BaseModel):
     error: Optional[str] = None
 
 class ScriptPreviewRequest(BaseModel):
-    url: HttpUrl
+    url: Optional[HttpUrl] = None
+    document_id: Optional[str] = None
     video_style: str = "tutorial"
     video_duration: int = 10
     custom_prompt: Optional[str] = None
+    
+    @model_validator(mode='after')
+    def validate_source(self):
+        if not self.url and not self.document_id:
+            raise ValueError("Either url or document_id must be provided")
+        if self.url and self.document_id:
+            raise ValueError("Cannot provide both url and document_id")
+        return self
 
 class ScriptPreviewResponse(BaseModel):
     script: str
-    url: str
+    source: str  # URL or document title
+    source_type: str  # "url", "github_repo", or "document"
     video_duration: int
 
 class VideoCreateWithScriptRequest(BaseModel):
-    url: HttpUrl
+    url: Optional[HttpUrl] = None
+    document_id: Optional[str] = None
     script: str
     avatar_type: str = "professional_female"
     voice_type: str = "tr_female_professional"
@@ -101,6 +122,14 @@ class VideoCreateWithScriptRequest(BaseModel):
     scroll_speed: str = "medium"
     custom_prompt: Optional[str] = None
     custom_avatar_image_id: Optional[str] = None  # For custom_avatar_overlay mode
+    
+    @model_validator(mode='after')
+    def validate_source(self):
+        if not self.url and not self.document_id:
+            raise ValueError("Either url or document_id must be provided")
+        if self.url and self.document_id:
+            raise ValueError("Cannot provide both url and document_id")
+        return self
 
 class GitHubAnalyzer:
     """GitHub repository analysis service"""
@@ -337,10 +366,19 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
             # Custom avatar overlay pipeline with approved script
             await update_progress(video_id, 10, "🎬 Recording screen with browser automation...")
             
+            # Determine source URL
+            if request.url:
+                source_url = str(request.url)
+            elif request.document_id:
+                # Screen recording requires URL
+                raise Exception("Doküman için screen recording modu desteklenmez. Lütfen avatar modu kullanın.")
+            else:
+                raise Exception("URL veya document_id gerekli")
+            
             from services.screen_recorder import ScreenRecorderService
             recorder = ScreenRecorderService()
             screen_video = await recorder.record_website(
-                url=str(request.url),
+                url=source_url,
                 video_id=video_id,
                 duration_minutes=request.video_duration,
                 scroll_speed=request.scroll_speed
@@ -395,10 +433,19 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
         elif request.mode == "screen_recording":
             await update_progress(video_id, 10, "📊 Preparing screen recording...")
             
+            # Determine source URL
+            if request.url:
+                source_url = str(request.url)
+            elif request.document_id:
+                # Screen recording requires URL
+                raise Exception("Doküman için screen recording modu desteklenmez. Lütfen avatar modu kullanın.")
+            else:
+                raise Exception("URL veya document_id gerekli")
+            
             from services.screen_recorder import ScreenRecorderService
             recorder = ScreenRecorderService()
             screen_video = await recorder.record_website(
-                url=str(request.url),
+                url=source_url,
                 video_id=video_id,
                 duration_minutes=request.video_duration,
                 scroll_speed=request.scroll_speed
@@ -462,13 +509,33 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             await asyncio.sleep(1)
             
             from services.website_analyzer import ContentAnalyzer
-            repo_data = await ContentAnalyzer.analyze_url(str(request.url))
+            
+            # Get content based on source type
+            if request.url:
+                repo_data = await ContentAnalyzer.analyze_url(str(request.url))
+                source_url = str(request.url)
+            elif request.document_id:
+                from pathlib import Path as PathLib
+                doc_path = PathLib("videos/uploads/documents")
+                doc_files = list(doc_path.glob(f"{request.document_id}.*"))
+                if not doc_files:
+                    raise Exception("Doküman bulunamadı")
+                doc_file = doc_files[0]
+                repo_data = await ContentAnalyzer.analyze_document(str(doc_file), doc_file.name)
+                source_url = None  # No URL for documents
+            else:
+                raise Exception("URL veya document_id gerekli")
             
             await update_progress(video_id, 15, f"🎬 Recording screen with browser automation...")
             from services.screen_recorder import ScreenRecorderService
             recorder = ScreenRecorderService()
+            
+            # Screen recording requires URL
+            if not source_url:
+                raise Exception("Doküman için screen recording modu desteklenmez. Lütfen avatar modu kullanın.")
+            
             screen_video = await recorder.record_website(
-                url=str(request.url),
+                url=source_url,
                 video_id=video_id,
                 duration_minutes=request.video_duration,
                 scroll_speed=request.scroll_speed
@@ -527,13 +594,22 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             await asyncio.sleep(1)
             
             from services.website_analyzer import ContentAnalyzer
-            repo_data = await ContentAnalyzer.analyze_url(str(request.url))
+            
+            # Get content based on source type
+            if request.url:
+                repo_data = await ContentAnalyzer.analyze_url(str(request.url))
+                source_url = str(request.url)
+            elif request.document_id:
+                # Screen recording mode does not support documents
+                raise Exception("Doküman için screen recording modu desteklenmez. Lütfen avatar modu kullanın.")
+            else:
+                raise Exception("URL veya document_id gerekli")
             
             await update_progress(video_id, 20, f"🎬 Recording screen with browser automation...")
             from services.screen_recorder import ScreenRecorderService
             recorder = ScreenRecorderService()
             screen_video = await recorder.record_website(
-                url=str(request.url),
+                url=source_url,
                 video_id=video_id,
                 duration_minutes=request.video_duration,
                 scroll_speed=request.scroll_speed
@@ -562,7 +638,20 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             await asyncio.sleep(1)
             
             from services.website_analyzer import ContentAnalyzer
-            repo_data = await ContentAnalyzer.analyze_url(str(request.url))
+            
+            # Get content based on source type
+            if request.url:
+                repo_data = await ContentAnalyzer.analyze_url(str(request.url))
+            elif request.document_id:
+                from pathlib import Path as PathLib
+                doc_path = PathLib("videos/uploads/documents")
+                doc_files = list(doc_path.glob(f"{request.document_id}.*"))
+                if not doc_files:
+                    raise Exception("Doküman bulunamadı")
+                doc_file = doc_files[0]
+                repo_data = await ContentAnalyzer.analyze_document(str(doc_file), doc_file.name)
+            else:
+                raise Exception("URL veya document_id gerekli")
             
             await update_progress(video_id, 25, f"✍️ Generating {request.video_duration}-minute Turkish script with AI...")
             script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration, custom_prompt=getattr(request, 'custom_prompt', None))
@@ -633,11 +722,47 @@ async def home():
                 <h2 class="text-2xl font-semibold mb-4">Yeni Video Oluştur</h2>
                 
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Web Sitesi veya GitHub URL</label>
-                        <input type="text" id="githubUrl" placeholder="https://example.com veya https://github.com/owner/repo" 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        <p class="text-xs text-gray-500 mt-1">✨ Herhangi bir web sitesi URL'i girin - otomatik analiz edilecek!</p>
+                    <!-- Tab System for URL vs Document -->
+                    <div class="mb-4">
+                        <div class="flex gap-2 mb-4 border-b border-gray-200">
+                            <button id="urlTabBtn" onclick="switchTab('url')" class="px-4 py-2 font-medium text-purple-600 border-b-2 border-purple-600 transition-colors">
+                                🌐 Web Sitesi / URL
+                            </button>
+                            <button id="documentTabBtn" onclick="switchTab('document')" class="px-4 py-2 font-medium text-gray-500 hover:text-purple-600 transition-colors">
+                                📄 Doküman Yükle
+                            </button>
+                        </div>
+                        
+                        <!-- URL Tab -->
+                        <div id="urlTab">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Web Sitesi veya GitHub URL</label>
+                            <input type="text" id="githubUrl" placeholder="https://example.com veya https://github.com/owner/repo" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <p class="text-xs text-gray-500 mt-1">✨ Herhangi bir web sitesi URL'i girin - otomatik analiz edilecek!</p>
+                        </div>
+                        
+                        <!-- Document Tab -->
+                        <div id="documentTab" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">📄 Doküman Yükle (PDF, DOCX, TXT, MD)</label>
+                            <input type="file" id="documentFile" accept="application/pdf,.pdf,.docx,.txt,.md,.markdown" 
+                                   onchange="handleDocumentUpload()"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white">
+                            <p class="text-xs text-gray-500 mt-2">📁 Maksimum dosya boyutu: 10MB | Desteklenen formatlar: PDF, DOCX, TXT, MD</p>
+                            
+                            <!-- Document Upload Status -->
+                            <div id="documentUploadStatus" class="mt-3 hidden"></div>
+                            
+                            <!-- Document Preview -->
+                            <div id="documentPreview" class="mt-4 hidden bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-2">📋 Yüklenen Doküman:</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><strong>Dosya:</strong> <span id="docFileName"></span></p>
+                                    <p><strong>Kelime Sayısı:</strong> <span id="docWordCount"></span></p>
+                                    <p class="text-xs text-gray-600 mt-2"><strong>Önizleme:</strong></p>
+                                    <p id="docPreviewText" class="text-xs text-gray-600 bg-white p-2 rounded border border-gray-200 max-h-20 overflow-y-auto"></p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Custom Prompt/Instructions -->
@@ -905,6 +1030,125 @@ async def home():
         let currentVideoId = null;
         let currentVideoUrl = null;
         let statusInterval = null;
+        let activeTab = 'url'; // Track active tab: 'url' or 'document'
+        let uploadedDocumentId = null; // Store uploaded document ID
+        
+        // Tab switching function
+        function switchTab(tab) {
+            activeTab = tab;
+            
+            const urlTab = document.getElementById('urlTab');
+            const documentTab = document.getElementById('documentTab');
+            const urlTabBtn = document.getElementById('urlTabBtn');
+            const documentTabBtn = document.getElementById('documentTabBtn');
+            const videoMode = document.getElementById('videoMode');
+            
+            if (tab === 'url') {
+                // Show URL tab
+                urlTab.classList.remove('hidden');
+                documentTab.classList.add('hidden');
+                urlTabBtn.classList.add('text-purple-600', 'border-b-2', 'border-purple-600');
+                urlTabBtn.classList.remove('text-gray-500');
+                documentTabBtn.classList.remove('text-purple-600', 'border-b-2', 'border-purple-600');
+                documentTabBtn.classList.add('text-gray-500');
+                
+                // Re-enable all video modes for URL
+                videoMode.innerHTML = `
+                    <option value="screen_recording">🚀 Sadece Ekran Kaydı + Ses (Hızlı - Avatar YOK)</option>
+                    <option value="custom_avatar_overlay">📸 Ekran Kaydı + Fotoğraflı Avatar Overlay (Köşede siz konuşursunuz!)</option>
+                    <option value="avatar">👤 Sadece AI Avatar (Yavaş - Web sitesi YOK)</option>
+                `;
+            } else {
+                // Show Document tab
+                urlTab.classList.add('hidden');
+                documentTab.classList.remove('hidden');
+                documentTabBtn.classList.add('text-purple-600', 'border-b-2', 'border-purple-600');
+                documentTabBtn.classList.remove('text-gray-500');
+                urlTabBtn.classList.remove('text-purple-600', 'border-b-2', 'border-purple-600');
+                urlTabBtn.classList.add('text-gray-500');
+                
+                // Disable screen recording mode for documents
+                videoMode.innerHTML = `
+                    <option value="avatar">👤 AI Avatar (Önerilen)</option>
+                    <option value="custom_avatar_overlay" disabled>📸 Ekran Kaydı + Avatar (⚠️ Sadece URL için)</option>
+                    <option value="screen_recording" disabled>🚀 Ekran Kaydı (⚠️ Sadece URL için)</option>
+                `;
+                videoMode.value = 'avatar';
+            }
+            
+            toggleModeOptions();
+        }
+        
+        // Document upload handler
+        async function handleDocumentUpload() {
+            const documentFile = document.getElementById('documentFile');
+            const file = documentFile.files[0];
+            const uploadStatus = document.getElementById('documentUploadStatus');
+            const documentPreview = document.getElementById('documentPreview');
+            
+            if (!file) {
+                uploadedDocumentId = null;
+                documentPreview.classList.add('hidden');
+                uploadStatus.classList.add('hidden');
+                return;
+            }
+            
+            // Check file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                uploadStatus.classList.remove('hidden');
+                uploadStatus.className = 'mt-3 text-sm text-red-600';
+                uploadStatus.textContent = '❌ Dosya boyutu 10MB\'dan küçük olmalıdır!';
+                documentFile.value = '';
+                uploadedDocumentId = null;
+                return;
+            }
+            
+            // Show upload progress
+            uploadStatus.classList.remove('hidden');
+            uploadStatus.className = 'mt-3 text-sm text-blue-600';
+            uploadStatus.textContent = '⏳ Doküman yükleniyor ve analiz ediliyor...';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/uploads/document', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    let errorMsg = 'Doküman yüklenemedi';
+                    try {
+                        const error = await response.json();
+                        errorMsg = error.detail || errorMsg;
+                    } catch (e) {
+                        errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+                const result = await response.json();
+                uploadedDocumentId = result.document_id;
+                
+                // Show success and preview
+                uploadStatus.className = 'mt-3 text-sm text-green-600';
+                uploadStatus.textContent = '✅ Doküman başarıyla yüklendi ve analiz edildi!';
+                
+                // Display document info
+                document.getElementById('docFileName').textContent = result.filename;
+                document.getElementById('docWordCount').textContent = result.word_count;
+                document.getElementById('docPreviewText').textContent = result.preview;
+                documentPreview.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Document upload error:', error);
+                uploadStatus.className = 'mt-3 text-sm text-red-600';
+                uploadStatus.textContent = '❌ Hata: ' + (error.message || 'Bilinmeyen hata');
+                uploadedDocumentId = null;
+                documentPreview.classList.add('hidden');
+            }
+        }
         
         // Check API status on page load
         function toggleModeOptions() {
@@ -1062,27 +1306,38 @@ async def home():
         }
         
         async function previewScript() {
-            const url = document.getElementById('githubUrl').value;
-            if (!url) {
-                alert('Lütfen bir web sitesi URL girin');
-                return;
-            }
-            
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                alert('Lütfen geçerli bir URL girin (http:// veya https:// ile başlamalı)');
-                return;
-            }
-            
-            currentVideoUrl = url;
-            
             const customPrompt = document.getElementById('customPrompt').value.trim();
-            
-            const data = {
-                url: url,
+            let data = {
                 video_style: document.getElementById('commonVideoStyle').value,
                 video_duration: parseInt(document.getElementById('commonDuration').value),
                 custom_prompt: customPrompt || null
             };
+            
+            // Check active tab and add appropriate source
+            if (activeTab === 'url') {
+                const url = document.getElementById('githubUrl').value;
+                if (!url) {
+                    alert('Lütfen bir web sitesi URL girin');
+                    return;
+                }
+                
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    alert('Lütfen geçerli bir URL girin (http:// veya https:// ile başlamalı)');
+                    return;
+                }
+                
+                currentVideoUrl = url;
+                data.url = url;
+            } else {
+                // Document tab
+                if (!uploadedDocumentId) {
+                    alert('Lütfen önce bir doküman yükleyin');
+                    return;
+                }
+                
+                currentVideoUrl = null;
+                data.document_id = uploadedDocumentId;
+            }
             
             // Show script preview panel
             document.getElementById('scriptPreview').classList.remove('hidden');
@@ -1117,8 +1372,18 @@ async def home():
         
         async function approveScript() {
             const editedScript = document.getElementById('scriptText').value;
-            if (!editedScript || !currentVideoUrl) {
-                alert('Script veya URL eksik');
+            if (!editedScript) {
+                alert('Script eksik');
+                return;
+            }
+            
+            // Check source based on active tab
+            if (activeTab === 'url' && !currentVideoUrl) {
+                alert('URL eksik');
+                return;
+            }
+            if (activeTab === 'document' && !uploadedDocumentId) {
+                alert('Doküman eksik');
                 return;
             }
             
@@ -1136,7 +1401,6 @@ async def home():
             }
             
             const data = {
-                url: currentVideoUrl,
                 script: editedScript,
                 mode: mode,
                 scroll_speed: document.getElementById('scrollSpeed').value,
@@ -1148,6 +1412,13 @@ async def home():
                 custom_prompt: customPrompt || null,
                 custom_avatar_image_id: customAvatarImageId
             };
+            
+            // Add URL or document_id based on active tab
+            if (activeTab === 'url') {
+                data.url = currentVideoUrl;
+            } else {
+                data.document_id = uploadedDocumentId;
+            }
             
             try {
                 const response = await fetch('/api/videos/create-with-script', {
@@ -1196,18 +1467,28 @@ async def home():
         }
         
         async function createVideo() {
-            const url = document.getElementById('githubUrl').value;
-            if (!url) {
-                alert('Lütfen bir web sitesi URL girin');
-                return;
+            // Check source based on active tab
+            if (activeTab === 'url') {
+                const url = document.getElementById('githubUrl').value;
+                if (!url) {
+                    alert('Lütfen bir web sitesi URL girin');
+                    return;
+                }
+                
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    alert('Lütfen geçerli bir URL girin (http:// veya https:// ile başlamalı)');
+                    return;
+                }
+                
+                currentVideoUrl = url;
+            } else {
+                // Document tab
+                if (!uploadedDocumentId) {
+                    alert('Lütfen önce bir doküman yükleyin');
+                    return;
+                }
+                currentVideoUrl = null;
             }
-            
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                alert('Lütfen geçerli bir URL girin (http:// veya https:// ile başlamalı)');
-                return;
-            }
-            
-            currentVideoUrl = url;
             
             const mode = document.getElementById('videoMode').value;
             
@@ -1222,7 +1503,6 @@ async def home():
             }
             
             const data = {
-                url: url,
                 mode: mode,
                 scroll_speed: document.getElementById('scrollSpeed').value,
                 avatar_type: mode === 'avatar' ? document.getElementById('avatarType').value : 'professional_female',
@@ -1232,6 +1512,13 @@ async def home():
                 video_duration: parseInt(document.getElementById('commonDuration').value),
                 custom_avatar_image_id: customAvatarImageId
             };
+            
+            // Add URL or document_id based on active tab
+            if (activeTab === 'url') {
+                data.url = currentVideoUrl;
+            } else {
+                data.document_id = uploadedDocumentId;
+            }
             
             try {
                 const response = await fetch('/api/videos/create', {
@@ -1358,13 +1645,31 @@ async def home():
 async def preview_script(request: ScriptPreviewRequest):
     """Generate script preview without creating video"""
     try:
-        # Analyze content
         from services.website_analyzer import ContentAnalyzer
-        repo_data = await ContentAnalyzer.analyze_url(str(request.url))
+        
+        # Analyze content based on source type
+        if request.url:
+            # URL-based content
+            content_data = await ContentAnalyzer.analyze_url(str(request.url))
+            source = str(request.url)
+            source_type = content_data.get("type", "url")
+        elif request.document_id:
+            # Document-based content
+            doc_path = Path("videos/uploads/documents")
+            doc_files = list(doc_path.glob(f"{request.document_id}.*"))
+            if not doc_files:
+                raise HTTPException(status_code=404, detail="Doküman bulunamadı")
+            
+            doc_file = doc_files[0]
+            content_data = await ContentAnalyzer.analyze_document(str(doc_file), doc_file.name)
+            source = content_data.get("title", doc_file.name)
+            source_type = "document"
+        else:
+            raise HTTPException(status_code=400, detail="URL veya document_id gerekli")
         
         # Generate script using ScriptGenerator
         script_dict = await ScriptGenerator.generate_script(
-            repo_data,
+            content_data,
             request.video_style,
             request.video_duration,
             custom_prompt=request.custom_prompt or ""
@@ -1375,9 +1680,12 @@ async def preview_script(request: ScriptPreviewRequest):
         
         return ScriptPreviewResponse(
             script=script_text,
-            url=str(request.url),
+            source=source,
+            source_type=source_type,
             video_duration=request.video_duration
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Script oluşturulamadı: {str(e)}")
 
@@ -1449,6 +1757,78 @@ async def upload_avatar_image(file: UploadFile = File(...)):
     except Exception as e:
         print(f"❌ Upload hatası: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Yükleme hatası: {str(e)}")
+
+@app.post("/api/uploads/document")
+async def upload_document(file: UploadFile = File(...)):
+    """Upload document (PDF, DOCX, TXT, MD) for video generation"""
+    try:
+        # Validate filename exists
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="Dosya adı gerekli")
+        
+        print(f"📄 Doküman upload başladı: {file.filename}, content_type: {file.content_type}")
+        
+        # Check if file format is supported
+        if not DocumentAnalyzer.is_supported_document(file.filename):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Desteklenmeyen dosya formatı. Desteklenen: PDF, DOCX, TXT, MD"
+            )
+        
+        # Read file content
+        print("📖 Dosya okunuyor...")
+        content = await file.read()
+        print(f"✅ Dosya okundu: {len(content)} bytes")
+        
+        # Validate file size (max 10MB)
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Dosya boyutu 10MB'dan küçük olmalıdır")
+        
+        # Generate unique ID for the document
+        doc_id = str(uuid.uuid4())
+        
+        # Create documents upload directory
+        upload_dir = Path("videos/uploads/documents")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save the document with original extension
+        file_ext = Path(file.filename).suffix.lower()
+        file_path = upload_dir / f"{doc_id}{file_ext}"
+        
+        print(f"💾 Doküman kaydediliyor: {file_path}")
+        with open(file_path, "wb") as f:
+            f.write(content)
+        print("✅ Doküman kaydedildi")
+        
+        # Analyze document to extract content
+        print("📊 İçerik analiz ediliyor...")
+        analysis_result = await DocumentAnalyzer.analyze_document(str(file_path), file.filename)
+        print(f"✅ İçerik analiz edildi: {analysis_result['word_count']} kelime")
+        
+        # Check if content was truncated
+        truncated = analysis_result.get('truncated', False)
+        message = "Doküman başarıyla yüklendi ve analiz edildi!"
+        if truncated:
+            message = f"⚠️ Doküman yüklendi ancak {analysis_result.get('original_length')} karakterden {10000} karaktere kısaltıldı. Tam içerik video'da kullanılmayabilir."
+        
+        return {
+            "document_id": doc_id,
+            "filename": file.filename,
+            "file_path": str(file_path),
+            "file_type": analysis_result['file_type'],
+            "title": analysis_result['title'],
+            "word_count": analysis_result['word_count'],
+            "content_preview": analysis_result['content'][:200] + "..." if len(analysis_result['content']) > 200 else analysis_result['content'],
+            "truncated": truncated,
+            "original_length": analysis_result.get('original_length'),
+            "message": message
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Doküman upload hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Doküman yükleme hatası: {str(e)}")
 
 @app.post("/api/videos/create")
 async def create_video(request: VideoCreateRequest, background_tasks: BackgroundTasks):

@@ -2,11 +2,23 @@
 
 ## Overview
 
-AI Avatar Video Maker is a FastAPI-based web application that automatically generates Turkish tutorial videos (5, 10, or 15 minutes) from **any website or GitHub repository**. The system analyzes web content, generates professional Turkish scripts using AI, creates voiceovers, and combines them with AI avatar videos or screen recordings to produce complete educational content.
+AI Avatar Video Maker is a FastAPI-based web application that automatically generates Turkish tutorial videos (5, 10, or 15 minutes) from **any website, GitHub repository, or document (PDF/DOCX/TXT/MD)**. The system analyzes content from multiple sources, generates professional Turkish scripts using AI, creates voiceovers, and combines them with AI avatar videos or screen recordings to produce complete educational content.
 
-The application provides a REST API and web interface for submitting any web URL (including GitHub repositories) and monitoring video creation progress in real-time. Users can also **upload their own photo to create a personalized talking avatar** that appears in a circular frame at the video corner with lip-sync and facial expressions.
+The application provides a REST API and web interface for submitting web URLs, GitHub repositories, or uploading documents, and monitoring video creation progress in real-time. Users can also **upload their own photo to create a personalized talking avatar** that appears in a circular frame at the video corner with lip-sync and facial expressions.
 
 ## Recent Changes (October 2025)
+
+**NEW: PDF/Document Upload Support** (Latest - Oct 11):
+- ✅ Implemented full document upload functionality - users can now upload PDF, DOCX, TXT, MD files for video generation
+- ✅ Created `DocumentAnalyzer` service for extracting content from multiple document formats
+- ✅ Added `/api/uploads/document` endpoint (max 10MB, supports PDF/DOCX/TXT/MD)
+- ✅ Extended `ContentAnalyzer` to handle both URLs and documents
+- ✅ Installed document processing libraries: PyPDF2, python-docx, markdown
+- ✅ Frontend tab system: "Web Sitesi / URL" and "Doküman Yükle" tabs
+- ✅ Automatic content extraction: title detection, word count, text preview
+- ✅ Script preview and video creation work with both URL and document sources
+- ✅ Avatar mode supports documents, screen recording mode requires URLs (by design)
+- ✅ **User Experience**: Upload any document, get Turkish tutorial video!
 
 **Critical Issue - API Quota Management** (Oct 10 - Evening):
 - ⚠️ ElevenLabs quota critically low (2204 credits remaining)
@@ -14,8 +26,6 @@ The application provides a REST API and web interface for submitting any web URL
 - ⚠️ Users experiencing: 5-second blank videos with no sound or avatar
 - 🔧 **Recommended**: Use Replit integrations for better API key management
 - 🔧 **Immediate fix**: Top up ElevenLabs credits or switch to alternative TTS
-
-## Recent Changes (October 2025)
 
 **NEW: Custom Photo Avatar Overlay** (Latest - Oct 10):
 - ✅ Implemented custom photo upload feature - users can upload their own photo to create personalized talking avatar
