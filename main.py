@@ -75,6 +75,11 @@ class VideoCreateRequest(BaseModel):
             raise ValueError("Either url or document_id must be provided")
         if self.url and self.document_id:
             raise ValueError("Cannot provide both url and document_id")
+        
+        # Custom avatar images only work with D-ID provider
+        if hasattr(self, 'custom_avatar_image_id') and self.custom_avatar_image_id and hasattr(self, 'provider') and self.provider != "did":
+            raise ValueError("Custom avatar images require D-ID provider. Please select 'did' as provider.")
+        
         return self
 
 class VideoStatusResponse(BaseModel):
@@ -129,6 +134,11 @@ class VideoCreateWithScriptRequest(BaseModel):
             raise ValueError("Either url or document_id must be provided")
         if self.url and self.document_id:
             raise ValueError("Cannot provide both url and document_id")
+        
+        # Custom avatar images only work with D-ID provider
+        if hasattr(self, 'custom_avatar_image_id') and self.custom_avatar_image_id and hasattr(self, 'provider') and self.provider != "did":
+            raise ValueError("Custom avatar images require D-ID provider. Please select 'did' as provider.")
+        
         return self
 
 class GitHubAnalyzer:
