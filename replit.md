@@ -2,11 +2,29 @@
 
 ## Overview
 
-AI Avatar Video Maker is a FastAPI-based web application that automatically generates Turkish tutorial videos from any website, GitHub repository, or document (PDF/DOCX/TXT/MD). The system analyzes content, generates professional Turkish scripts using AI, creates voiceovers, and combines them with AI avatar videos or screen recordings. Users can also upload their own photo to create a personalized talking avatar with lip-sync and facial expressions, appearing in a circular frame. The project aims to provide an efficient way to produce educational content.
+AI Avatar Video Maker is a FastAPI-based web application that automatically generates Turkish tutorial videos from any website, GitHub repository, or document (PDF/DOCX/TXT/MD). The system analyzes content, generates professional Turkish scripts using AI (with document-specific prompts for accurate narration), creates voiceovers, and combines them with AI avatar videos or screen recordings. Users can upload their own photo to create a personalized talking avatar with lip-sync - the avatar video automatically loops to match full audio duration for complete 10-minute videos. Custom photo avatars work with both URLs and documents in avatar mode. The project provides an efficient way to produce educational content with smart content truncation warnings and seamless video composition.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## Recent Changes (October 11, 2025)
+
+**Document AI Script Fix** (Latest):
+- ✅ Added document-specific AI prompts in `AIService` - scripts now correctly describe "doküman içeriği" instead of "web sitesi tanıtımı"
+- ✅ Document flow replaces generic terms: "projeyi" → "dokümanı", "özelliklere" → "içeriğe", "kurulum" → "önemli noktalara"
+- ✅ Demo script updated to handle `is_document` flag with appropriate Turkish phrasing
+
+**Custom Photo Avatar for Documents** (Latest):
+- ✅ Avatar mode now supports `custom_avatar_image_id` for both URLs and documents
+- ✅ Frontend updated to show custom photo upload option in avatar mode
+- ✅ Both pipelines (with/without script preview) detect custom images and use D-ID with custom photos
+
+**Video Loop Composer - 500 Character Bug Fix** (Latest):
+- ✅ Added `compose_video_with_loop()` function in `VideoComposer` to loop short avatar clips
+- ✅ Uses ffprobe to detect audio duration and loops avatar video with `-stream_loop -1 -t <duration>`
+- ✅ Custom photo avatars now generate full 10-minute videos matching complete audio narration
+- ✅ Fixed critical bug where D-ID 500-char limit caused premature video cutoff
 
 ## System Architecture
 
