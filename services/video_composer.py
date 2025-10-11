@@ -101,6 +101,69 @@ class VideoComposer:
             return await VideoComposer._create_demo_fallback(final_video_path)
     
     @staticmethod
+    async def compose_video_with_loop(
+        avatar_video: str,
+        audio_file: str,
+        video_id: str
+    ) -> str:
+        """
+        Compose video by looping short avatar clip to match audio duration
+        Used for custom photo avatars where D-ID creates short clips
+        """
+        
+        final_video_path = f"videos/final_{video_id}.mp4"
+        
+        Path("videos").mkdir(exist_ok=True)
+        
+        try:
+            # Check if we have valid inputs
+            if not Path(avatar_video).exists() or not Path(audio_file).exists():
+                print("⚠️ Missing avatar video or audio, creating demo video")
+                return await VideoComposer._create_demo_fallback(final_video_path)
+            
+            print(f"🔁 Looping avatar video to match audio duration...")
+            
+            # Get audio duration using ffprobe
+            probe_cmd = [
+                'ffprobe', '-v', 'error',
+                '-show_entries', 'format=duration',
+                '-of', 'default=noprint_wrappers=1:nokey=1',
+                audio_file
+            ]
+            
+            result = subprocess.run(probe_cmd, capture_output=True, text=True)
+            audio_duration = float(result.stdout.strip())
+            print(f"🎤 Audio duration: {audio_duration:.1f} seconds")
+            
+            # Loop avatar video to match audio duration + small buffer
+            loop_cmd = [
+                'ffmpeg', '-y',
+                '-stream_loop', '-1',  # Infinite loop
+                '-i', avatar_video,
+                '-i', audio_file,
+                '-c:v', 'libx264',  # Re-encode video for looping
+                '-preset', 'fast',
+                '-c:a', 'aac',
+                '-b:a', '128k',
+                '-t', str(audio_duration),  # Limit to audio duration
+                '-map', '0:v:0',  # Video from first input (looped)
+                '-map', '1:a:0',  # Audio from second input
+                '-movflags', '+faststart',  # QuickTime compatibility
+                final_video_path
+            ]
+            
+            print(f"🎬 Creating looped avatar video...")
+            await VideoComposer._run_ffmpeg(loop_cmd)
+            
+            print(f"✅ Video composed successfully: {final_video_path}")
+            return final_video_path
+            
+        except Exception as e:
+            print(f"❌ FFmpeg loop composition failed: {e}")
+            # Create fallback demo video
+            return await VideoComposer._create_demo_fallback(final_video_path)
+    
+    @staticmethod
     async def _run_ffmpeg(cmd: List[str]):
         """Run FFmpeg command in executor to keep async service responsive"""
         loop = asyncio.get_event_loop()

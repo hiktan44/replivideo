@@ -468,13 +468,48 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
             await update_progress(video_id, 25, "🎤 Creating Turkish professional voiceover...")
             audio_file = await TTSService.generate_audio(script, request.voice_type)
             
-            await update_progress(video_id, 50, f"🎭 Rendering avatar video segments with {request.provider.upper()}...")
-            avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file, request.provider)
+            # Check for custom avatar image
+            custom_image_path = None
+            if hasattr(request, 'custom_avatar_image_id') and request.custom_avatar_image_id:
+                # Check which format was uploaded
+                jpg_path = f"videos/uploads/{request.custom_avatar_image_id}.jpg"
+                png_path = f"videos/uploads/{request.custom_avatar_image_id}.png"
+                
+                from pathlib import Path
+                if Path(jpg_path).exists():
+                    custom_image_path = jpg_path
+                    print(f"✅ Using custom avatar image: {jpg_path}")
+                elif Path(png_path).exists():
+                    custom_image_path = png_path
+                    print(f"✅ Using custom avatar image: {png_path}")
+                else:
+                    print(f"⚠️ Custom image not found: {request.custom_avatar_image_id}")
             
-            await update_progress(video_id, 75, "🎬 Composing final video...")
-            from services.video_composer import VideoComposer
-            composer = VideoComposer()
-            final_video = await composer.compose_video(avatar_videos, audio_file, video_id)
+            await update_progress(video_id, 50, f"🎭 Rendering avatar video segments with {request.provider.upper()}...")
+            
+            # If custom image provided, use D-ID directly (supports custom images)
+            if custom_image_path:
+                print("🖼️ Creating avatar video with custom photo...")
+                from services.did_service import DIDService
+                did_service = DIDService()
+                avatar_video = await did_service.create_avatar_video(
+                    text=str(script)[:500],  # D-ID has text limit for lip-sync
+                    avatar_type=request.avatar_type,
+                    custom_image_path=custom_image_path
+                )
+                
+                await update_progress(video_id, 75, "🎬 Looping avatar video to match full audio...")
+                from services.video_composer import VideoComposer
+                # Use loop composer for custom photo (short D-ID clip)
+                final_video = await VideoComposer.compose_video_with_loop(avatar_video, audio_file, video_id)
+            else:
+                # Standard avatar rendering
+                avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file, request.provider)
+                
+                await update_progress(video_id, 75, "🎬 Composing final video...")
+                from services.video_composer import VideoComposer
+                composer = VideoComposer()
+                final_video = await composer.compose_video(avatar_videos, audio_file, video_id)
             
             await update_progress(video_id, 100, "✅ Video completed successfully!")
             videos_db[video_id]["status"] = "completed"
@@ -659,14 +694,48 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             await update_progress(video_id, 45, "🎤 Creating Turkish professional voiceover...")
             audio_file = await TTSService.generate_audio(script, request.voice_type)
             
+            # Check for custom avatar image
+            custom_image_path = None
+            if hasattr(request, 'custom_avatar_image_id') and request.custom_avatar_image_id:
+                # Check which format was uploaded
+                jpg_path = f"videos/uploads/{request.custom_avatar_image_id}.jpg"
+                png_path = f"videos/uploads/{request.custom_avatar_image_id}.png"
+                
+                from pathlib import Path
+                if Path(jpg_path).exists():
+                    custom_image_path = jpg_path
+                    print(f"✅ Using custom avatar image: {jpg_path}")
+                elif Path(png_path).exists():
+                    custom_image_path = png_path
+                    print(f"✅ Using custom avatar image: {png_path}")
+                else:
+                    print(f"⚠️ Custom image not found: {request.custom_avatar_image_id}")
+            
             await update_progress(video_id, 65, f"🎭 Rendering avatar video segments with {request.provider.upper()}...")
-            avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file, request.provider)
             
-            await update_progress(video_id, 85, "🎬 Composing final video...")
-            
-            from services.video_composer import VideoComposer
-            composer = VideoComposer()
-            final_video = await composer.compose_video(avatar_videos, audio_file, video_id)
+            # If custom image provided, use D-ID directly (supports custom images)
+            if custom_image_path:
+                print("🖼️ Creating avatar video with custom photo...")
+                from services.did_service import DIDService
+                did_service = DIDService()
+                avatar_video = await did_service.create_avatar_video(
+                    text=str(script)[:500],  # D-ID has text limit for lip-sync
+                    avatar_type=request.avatar_type,
+                    custom_image_path=custom_image_path
+                )
+                
+                await update_progress(video_id, 85, "🎬 Looping avatar video to match full audio...")
+                from services.video_composer import VideoComposer
+                # Use loop composer for custom photo (short D-ID clip)
+                final_video = await VideoComposer.compose_video_with_loop(avatar_video, audio_file, video_id)
+            else:
+                # Standard avatar rendering
+                avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file, request.provider)
+                
+                await update_progress(video_id, 85, "🎬 Composing final video...")
+                from services.video_composer import VideoComposer
+                composer = VideoComposer()
+                final_video = await composer.compose_video(avatar_videos, audio_file, video_id)
             
             await update_progress(video_id, 100, "✅ Video completed successfully!")
             videos_db[video_id]["status"] = "completed"
@@ -1160,7 +1229,7 @@ async def home():
             if (mode === 'avatar') {
                 avatarOptions.classList.remove('hidden');
                 scrollSpeedOption.classList.add('hidden');
-                customAvatarUpload.classList.add('hidden');
+                customAvatarUpload.classList.remove('hidden');
             } else if (mode === 'custom_avatar_overlay') {
                 avatarOptions.classList.add('hidden');
                 scrollSpeedOption.classList.remove('hidden');

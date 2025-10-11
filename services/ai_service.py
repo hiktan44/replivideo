@@ -80,7 +80,57 @@ class AIService:
         
         config = duration_configs.get(video_duration, duration_configs[10])
         
-        if content_type == 'github_repo':
+        if content_type == 'document':
+            # Document-specific prompt
+            title = content_data.get('title', 'Doküman')
+            file_type = content_data.get('file_type', 'document')
+            content = content_data.get('content', '')[:2000]
+            headings = content_data.get('headings', [])
+            headings_text = '\n'.join([f"- {h.get('text', '')}" for h in headings[:10]])
+            word_count = content_data.get('word_count', 0)
+            
+            # Document flow - focus on content explanation
+            doc_flow = config['flow'].replace('projeyi', 'dokümanı').replace('Projeyi', 'Dokümanı').replace('özelliklere', 'içeriğe').replace('kurulum', 'önemli noktalara')
+            
+            prompt = f"""
+Yüklenmiş bir doküman hakkında {video_duration} dakikalık Türkçe eğitim videosu scripti oluştur.
+
+Doküman Bilgileri:
+- Başlık: {title}
+- Dosya Tipi: {file_type.upper()}
+- Kelime Sayısı: {word_count}
+
+Ana Başlıklar/Bölümler:
+{headings_text if headings_text else '(Başlık bulunamadı)'}
+
+Doküman İçeriği:
+{content}
+
+Gereksinimler:
+1. Toplam süre: Tam {video_duration} dakika (yaklaşık {config['word_range']} kelime)
+2. Dil: Türkçe, profesyonel ama samimi
+3. Stil: Eğitici ve açıklayıcı - dokümanın içeriğini anlat
+4. Akış rehberi:
+{doc_flow}
+
+5. BÖLÜM BAŞLIKLARI KULLANMA - sadece doğal konuşma akışı
+6. Timestamp veya [zaman] işaretleri kullanma
+7. Dokümandaki konuları doğal geçişlerle birbirine bağla ("Şimdi...", "Gelin bakalım...", "Peki..." gibi)
+8. Sanki birisiyle konuşuyormuş gibi samimi ve akıcı yaz
+9. Teknik terimleri günlük dille açıkla
+10. İzleyiciyle bağ kur - dokümanın önemli noktalarını vurgula ve örneklerle açıkla
+11. Dokümanın içeriğini özetle ve öğretici bir şekilde sun - "web sitesi" veya "proje" deme, dokümanın kendisinden bahset
+{f'''
+
+ÖNEMLİ - KULLANICININ ÖZEL TALİMATLARI:
+{custom_prompt}
+
+Bu talimatları mutlaka dikkate al ve script'i buna göre hazırla!
+''' if custom_prompt else ''}
+
+Doğal, başlıksız ve akıcı scripti şimdi oluştur:
+"""
+        elif content_type == 'github_repo':
             # GitHub repository prompt
             prompt = f"""
 GitHub projesi için {video_duration} dakikalık Türkçe eğitim videosu scripti oluştur.
@@ -213,8 +263,22 @@ Doğal, başlıksız ve akıcı scripti şimdi oluştur:
         
         content_type = content_data.get('type', 'github_repo')
         is_github = content_type == 'github_repo'
+        is_document = content_type == 'document'
         
-        if is_github:
+        if is_document:
+            # Document content
+            name = content_data.get('title', 'Doküman')
+            description = content_data.get('content', '')[:200] + '...' if len(content_data.get('content', '')) > 200 else content_data.get('content', 'Doküman içeriği')
+            file_type = content_data.get('file_type', 'belge')
+            word_count = content_data.get('word_count', 0)
+            topics_str = f'{file_type.upper()} belgesi, {word_count} kelime'
+            language = 'Doküman'
+            stars = 0
+            forks = 0
+            license_info = 'N/A'
+            owner = ''
+            repo = ''
+        elif is_github:
             topics_str = ', '.join(content_data.get('topics', [])[:3]) if content_data.get('topics') else 'web geliştirme, API entegrasyonu'
             name = content_data.get('name', 'Proje')
             description = content_data.get('description', 'Açık kaynak proje')
@@ -237,9 +301,9 @@ Doğal, başlıksız ve akıcı scripti şimdi oluştur:
             repo = ''
         
         # Prepare dynamic text parts to avoid f-string backslash issues
-        content_label = 'projesini' if is_github else 'sitesini'
+        content_label = 'projesini' if is_github else ('dokümanını' if is_document else 'sitesini')
         setup_verb = 'kurulur ve' if is_github else ''
-        section_title = 'PROJE' if is_github else 'SİTE'
+        section_title = 'PROJE' if is_github else ('DOKÜMAN' if is_document else 'SİTE')
         
         github_stars_text = f"GitHub'da {stars} yıldız almış popüler bir açık kaynak projedir." if is_github and stars > 0 else ''
         forks_text = f"{forks} fork ile aktif bir geliştirici topluluğuna sahip." if is_github and forks > 0 else ''
