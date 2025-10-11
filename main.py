@@ -1380,7 +1380,7 @@ async def home():
                 if (providerSelect && providerSelect.value !== 'did') {
                     providerSelect.value = 'did';
                     uploadStatus.className = 'mt-2 text-sm text-green-600';
-                    uploadStatus.textContent = '✅ Fotoğraf yüklendi! Provider otomatik D-ID\'ye ayarlandı.';
+                    uploadStatus.textContent = '✅ Fotoğraf yüklendi! Provider otomatik D-ID seçildi.';
                 } else {
                     uploadStatus.className = 'mt-2 text-sm text-green-600';
                     uploadStatus.textContent = '✅ Fotoğraf başarıyla yüklendi!';
