@@ -1394,6 +1394,8 @@ async def home():
             }
         }
         
+        console.log('🔧 About to define window.previewScript...');
+        
         // Define globally accessible functions
         window.previewScript = async function() {
             const customPrompt = document.getElementById('customPrompt').value.trim();
