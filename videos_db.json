@@ -586,14 +586,40 @@
   },
   "5daf187f-609f-4793-ae89-cbc6b71fa2db": {
     "video_id": "5daf187f-609f-4793-ae89-cbc6b71fa2db",
-    "status": "processing",
-    "progress": 10,
-    "current_stage": "\ud83d\udcca Preparing screen recording...",
-    "video_url": null,
+    "status": "completed",
+    "progress": 100,
+    "current_stage": "\u2705 Video completed successfully!",
+    "video_url": "/api/videos/5daf187f-609f-4793-ae89-cbc6b71fa2db/download",
     "youtube_url": null,
     "created_at": "2025-10-13T13:07:02.365975",
+    "completed_at": "2025-10-13T13:17:15.385771",
+    "error": null,
+    "approved_script": "T\u00fcrkiye ekonomisi 2025 y\u0131l\u0131nda b\u00fcy\u00fcme g\u00f6stermeye devam ediyor.",
+    "video_path": "videos/final_5daf187f-609f-4793-ae89-cbc6b71fa2db.mp4"
+  },
+  "174b5d42-6a96-4b5c-9edd-b21d9d806edc": {
+    "video_id": "174b5d42-6a96-4b5c-9edd-b21d9d806edc",
+    "status": "completed",
+    "progress": 100,
+    "current_stage": "\u2705 Video completed successfully!",
+    "video_url": "/api/videos/174b5d42-6a96-4b5c-9edd-b21d9d806edc/download",
+    "youtube_url": null,
+    "created_at": "2025-10-13T13:19:51.622939",
+    "completed_at": "2025-10-13T13:33:01.145002",
+    "error": null,
+    "approved_script": "Merhaba sevgili izleyiciler! Bug\u00fcn sizlerle birlikte n8n isimli harika bir projeyi ke\u015ffedece\u011fiz. Bu, otomasyon s\u00fcre\u00e7lerinizi kolayla\u015ft\u0131racak, yapay zeka yetenekleriyle donat\u0131lm\u0131\u015f bir platform. E\u011flenceli bir yolculuk olacak, \u00e7\u00fcnk\u00fc n8n, kod kullanma esnekli\u011fi ile kod kullanmama h\u0131z\u0131n\u0131 birle\u015ftiriyor. Ama endi\u015felenmeyin, bu sadece teknik ekipler i\u00e7in de\u011fil, herkesin kullanabilece\u011fi bir platform. \u015eimdi, n8n ile neler yapabilece\u011fimizi ve bu platformun nas\u0131l \u00e7al\u0131\u015ft\u0131\u011f\u0131n\u0131 detayl\u0131 bir \u015fekilde inceleyelim.\n\nn8n, asl\u0131nda \"fair-code\" lisans\u0131na sahip bir otomasyon platformu. 400'den fazla entegrasyonu var, bu da onu olduk\u00e7a g\u00fc\u00e7l\u00fc k\u0131l\u0131yor. Projenin arka plan\u0131na k\u0131saca de\u011finecek olursak, n8n'in temel amac\u0131, kullan\u0131c\u0131lar\u0131n otomasyon s\u00fcre\u00e7lerini g\u00f6rsel bir aray\u00fczle olu\u015fturabilmesini sa\u011flamak. Yani, karma\u015f\u0131k kodlamalar yapmadan, s\u00fcr\u00fckleyip b\u0131rakarak i\u015f ak\u0131\u015flar\u0131n\u0131z\u0131 kolayca olu\u015fturabiliyorsunuz. Ama ayn\u0131 zamanda, JavaScript veya Python gibi dillerde kod yazma imk\u00e2n\u0131n\u0131z da var. Bu esneklik, farkl\u0131 kullan\u0131c\u0131 t\u00fcrlerine hitap etmesini sa\u011fl\u0131yor. G\u00fczel de\u011fil mi?\n\n\u015eimdi, n8n'in baz\u0131 etkileyici \u00f6zelliklerine bakal\u0131m. \u0130lk olarak, \"Kod Gerekti\u011finde Kod Yaz\" \u00f6zelli\u011fi. Bu \u00f6zellik sayesinde, g\u00f6rsel aray\u00fczde \u00e7al\u0131\u015f\u0131rken, ihtiya\u00e7 duydu\u011funuzda JavaScript veya Python kodlar\u0131 yazabiliyorsunuz. Yani hem g\u00f6rsel hem de kod tabanl\u0131 bir yakla\u015f\u0131m benimseyebilirsiniz. \n\n\u0130kinci olarak, n8n\u2019in yapay zeka yeteneklerine bakal\u0131m. Platform, LangChain tabanl\u0131 AI ajans\u0131 i\u015f ak\u0131\u015flar\u0131 olu\u015fturman\u0131za olanak tan\u0131yor. Kendi verilerinizi ve modellerinizi kullanarak, yapay zeka ile g\u00fc\u00e7l\u00fc otomasyonlar yaratabilirsiniz. Bu, i\u015f s\u00fcre\u00e7lerinizi daha ak\u0131ll\u0131 hale getirebilir.\n\n\u00dc\u00e7\u00fcnc\u00fc bir \u00f6zellik ise, tam kontrol imk\u00e2n\u0131. n8n\u2019i kendi sunucunuzda bar\u0131nd\u0131rabilir veya bulut hizmeti olarak kullanabilirsiniz. Bu sayede verileriniz \u00fczerinde tamamen kontrol sahibi oluyorsunuz. \u00d6zellikle hassas verilerle \u00e7al\u0131\u015fan ekipler i\u00e7in bu olduk\u00e7a \u00f6nemli bir nokta.\n\nSon olarak, n8n\u2019in aktif toplulu\u011fu ve 900\u2019den fazla haz\u0131r \u015fablonuyla da dikkat \u00e7ekti\u011fini belirtmek laz\u0131m. Kendi i\u015f ak\u0131\u015flar\u0131n\u0131z\u0131 olu\u015ftururken, topluluktan faydalanabilir ve zaman kazanabilirsiniz.\n\nPeki, \u015fimdi bu \u00f6zellikleri pratikte nas\u0131l kullan\u0131yoruz? \u0130\u015fte burada n8n\u2019in sundu\u011fu geni\u015f entegrasyon yelpazesi devreye giriyor. \u00d6rne\u011fin, bir e-posta al\u0131nd\u0131\u011f\u0131nda otomatik olarak bir Slack mesaj\u0131 g\u00f6nderebilir, ya da bir form dolduruldu\u011funda verileri Google Sheets'e aktarabilirsiniz. Hatta bir API'den veri \u00e7ekip, bunu bir ba\u015fka serviste kullanabilirsiniz. Yani, n8n ile otomasyon s\u00fcre\u00e7lerinizi olduk\u00e7a \u00e7e\u015fitlendirebilirsiniz. \n\n\u015eimdi, kuruluma ge\u00e7elim. n8n\u2019i kullanmaya ba\u015flamak olduk\u00e7a basit. \u0130lk olarak, Node.js y\u00fckl\u00fc olmal\u0131. E\u011fer bunu yapt\u0131ysan\u0131z, terminalden sadece \u015fu komutu yazman\u0131z yeterli: `npx n8n`. Bu sayede n8n\u2019i an\u0131nda \u00e7al\u0131\u015ft\u0131rabilirsiniz. Alternatif olarak, Docker ile de kurulum yapabilirsiniz. Bunun i\u00e7in \u00f6nce bir veri hacmi olu\u015fturmal\u0131s\u0131n\u0131z ve ard\u0131ndan n8n\u2019i \u015fu komutla \u00e7al\u0131\u015ft\u0131rabilirsiniz: \n\n```\ndocker volume create n8n_data\ndocker run -it --rm --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n\n```\n\nArd\u0131ndan, web taray\u0131c\u0131n\u0131zda http://localhost adresine giderek n8n edit\u00f6r\u00fcne eri\u015febilirsiniz.\n\nSonu\u00e7 olarak, n8n sizlere g\u00fc\u00e7l\u00fc, esnek ve kullan\u0131c\u0131 dostu bir otomasyon arac\u0131 sunuyor. Kodlama bilginiz olsun ya da olmas\u0131n, bu platform sayesinde i\u015f s\u00fcre\u00e7lerinizi kolayca otomatikle\u015ftirebilirsiniz. Umar\u0131m bu video, n8n hakk\u0131nda bilgi sahibi olman\u0131za yard\u0131mc\u0131 olmu\u015ftur. E\u011fer merak etti\u011finiz ba\u015fka bir \u015fey olursa, yorumlarda belirtebilirsiniz. \u0130zledi\u011finiz i\u00e7in te\u015fekk\u00fcrler, bir sonraki videoda g\u00f6r\u00fc\u015fmek \u00fczere! Ho\u015f\u00e7a kal\u0131n!",
+    "video_path": "videos/final_174b5d42-6a96-4b5c-9edd-b21d9d806edc.mp4"
+  },
+  "2347c633-d31b-4859-935e-68d8a1955dd5": {
+    "video_id": "2347c633-d31b-4859-935e-68d8a1955dd5",
+    "status": "processing",
+    "progress": 50,
+    "current_stage": "\ud83c\udfad Rendering avatar video segments with HEYGEN...",
+    "video_url": null,
+    "youtube_url": null,
+    "created_at": "2025-10-13T14:49:38.689794",
     "completed_at": null,
     "error": null,
-    "approved_script": "T\u00fcrkiye ekonomisi 2025 y\u0131l\u0131nda b\u00fcy\u00fcme g\u00f6stermeye devam ediyor."
+    "approved_script": "K\u0131sa test videosu."
   }
 }
