@@ -54,13 +54,13 @@ class HeyGenService:
                 response.raise_for_status()
                 data = response.json()
                 
-                # Filter Turkish voices (check both language and locale)
+                # Filter Turkish voices (check language field for "Turkish" or "Turkey")
                 all_voices = data.get("data", {}).get("voices", [])
                 turkish_voices = [
                     voice for voice in all_voices
-                    if "tr" in voice.get("language", "").lower() or 
-                       "tr" in voice.get("locale", "").lower() or
-                       "turkish" in voice.get("language", "").lower()
+                    if "turkish" in voice.get("language", "").lower() or 
+                       "turkey" in voice.get("language", "").lower() or
+                       voice.get("language", "").lower() == "tr-tr"
                 ]
                 
                 self.voices_cache = turkish_voices
