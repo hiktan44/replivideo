@@ -1554,9 +1554,9 @@ async def home():
             } catch (error) {
                 alert('Hata: ' + error.message);
             }
-        }
+        };
         
-        function downloadVideo() {
+        window.downloadVideo = function() {
             if (!currentVideoId) {
                 alert('Video ID bulunamadı');
                 return;
@@ -1571,9 +1571,9 @@ async def home():
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-        }
+        };
         
-        async function createVideo() {
+        window.createVideo = async function() {
             // Check source based on active tab
             if (activeTab === 'url') {
                 const url = document.getElementById('githubUrl').value;
@@ -1660,9 +1660,9 @@ async def home():
             } catch (error) {
                 alert('Hata: ' + error.message);
             }
-        }
+        };
         
-        async function checkStatus() {
+        window.checkStatus = async function() {
             if (!currentVideoId) return;
             
             try {
@@ -1694,9 +1694,9 @@ async def home():
             } catch (error) {
                 console.error('Status check error:', error);
             }
-        }
+        };
         
-        function toggleEditOptions() {
+        window.toggleEditOptions = function() {
             const editOptions = document.getElementById('editOptions');
             if (editOptions.classList.contains('hidden')) {
                 editOptions.classList.remove('hidden');
@@ -1710,9 +1710,9 @@ async def home():
             } else {
                 editOptions.classList.add('hidden');
             }
-        }
+        };
         
-        async function recreateVideo() {
+        window.recreateVideo = async function() {
             if (!currentVideoUrl) {
                 alert('URL bilgisi bulunamadı');
                 return;
@@ -1754,7 +1754,9 @@ async def home():
             } catch (error) {
                 alert('Hata: ' + error.message);
             }
-        }
+        };
+        
+        console.log('✅ All functions defined globally!');
     </script>
 </body>
 </html>
