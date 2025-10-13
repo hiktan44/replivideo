@@ -1107,6 +1107,7 @@ async def home():
     </div>
     
     <script>
+        console.log('✅ Script loaded successfully!');
         let currentVideoId = null;
         let currentVideoUrl = null;
         let statusInterval = null;
