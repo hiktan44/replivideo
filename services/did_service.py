@@ -59,7 +59,7 @@ class DIDService:
                 avatar_url = self.avatar_images.get(avatar_type, self.avatar_images["professional_female"])
             
             headers = {
-                "Authorization": f"Bearer {self.api_key}",
+                "Authorization": f"Basic {self.api_key}",
                 "Content-Type": "application/json"
             }
             
