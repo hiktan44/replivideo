@@ -421,7 +421,7 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
                 text=str(script),
                 avatar_type=request.avatar_type,
                 custom_image_path=custom_image_path,
-                audio_path=audio_path  # Full 200s audio, bypasses text limit
+                audio_path=audio_file  # Full 200s audio, bypasses text limit
             )
             
             await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
@@ -626,7 +626,7 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
                 text=str(script),
                 avatar_type=request.avatar_type,
                 custom_image_path=custom_image_path,
-                audio_path=audio_path  # Full 200s audio, bypasses text limit
+                audio_path=audio_file  # Full 200s audio, bypasses text limit
             )
             
             await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
