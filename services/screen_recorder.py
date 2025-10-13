@@ -70,8 +70,22 @@ class ScreenRecorderService:
                 
                 # Navigate to URL
                 print(f"📄 Loading page: {url}")
-                await page.goto(url, wait_until='networkidle', timeout=60000)
-                await asyncio.sleep(2)
+                try:
+                    # Try networkidle first (ideal but can timeout on some sites)
+                    await page.goto(url, wait_until='networkidle', timeout=30000)
+                    print("✅ Page loaded with networkidle")
+                except Exception as e:
+                    # If networkidle fails, try 'load' which is more permissive
+                    print(f"⚠️ Networkidle failed ({str(e)[:50]}...), trying 'load'...")
+                    try:
+                        await page.goto(url, wait_until='load', timeout=30000)
+                        print("✅ Page loaded with 'load' strategy")
+                    except Exception:
+                        # Last resort: just navigate without waiting
+                        print("⚠️ Load also failed, navigating without wait...")
+                        await page.goto(url, timeout=20000)
+                
+                await asyncio.sleep(3)  # Wait for dynamic content to render
                 
                 # Calculate scroll parameters based on duration
                 scroll_params = self._calculate_scroll_params(duration_minutes, scroll_speed)
