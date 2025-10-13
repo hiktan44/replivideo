@@ -1455,14 +1455,16 @@ async def home():
                 alert('Script oluşturulamadı: ' + error.message);
                 document.getElementById('scriptPreview').classList.add('hidden');
             }
-        }
+        };
         
-        function cancelScript() {
+        console.log('✅ window.previewScript DEFINED! Type:', typeof window.previewScript);
+        
+        window.cancelScript = function() {
             document.getElementById('scriptPreview').classList.add('hidden');
             currentScript = null;
-        }
+        };
         
-        async function approveScript() {
+        window.approveScript = async function() {
             const editedScript = document.getElementById('scriptText').value;
             if (!editedScript) {
                 alert('Script eksik');
