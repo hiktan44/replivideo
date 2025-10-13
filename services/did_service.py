@@ -59,7 +59,7 @@ class DIDService:
                 avatar_url = self.avatar_images.get(avatar_type, self.avatar_images["professional_female"])
             
             headers = {
-                "Authorization": f"Basic {self.api_key}",
+                "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
             }
             
@@ -67,7 +67,7 @@ class DIDService:
                 "source_url": avatar_url,
                 "script": {
                     "type": "text",
-                    "input": text[:500],
+                    "input": text,  # Full text, no truncation
                     "provider": {
                         "type": "microsoft",
                         "voice_id": "tr-TR-EmelNeural"
