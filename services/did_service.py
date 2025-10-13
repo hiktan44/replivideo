@@ -27,13 +27,14 @@ class DIDService:
             "casual_male": "https://d-id-public-bucket.s3.amazonaws.com/mark.jpg"
         }
     
-    async def create_avatar_video(self, text: str, avatar_type: str, custom_image_path: Optional[str] = None) -> str:
+    async def create_avatar_video(self, text: str, avatar_type: str, custom_image_path: Optional[str] = None, audio_path: Optional[str] = None) -> str:
         """Create avatar video using D-ID API
         
         Args:
-            text: Script text for lip-sync
+            text: Script text for lip-sync (used if audio_path not provided)
             avatar_type: Preset avatar type (ignored if custom_image_path provided)
             custom_image_path: Optional path to custom user photo for personalized avatar
+            audio_path: Optional path to pre-generated audio file (bypasses text limit)
         """
         
         if not self.enabled:
@@ -63,21 +64,48 @@ class DIDService:
                 "Content-Type": "application/json"
             }
             
-            payload = {
-                "source_url": avatar_url,
-                "script": {
-                    "type": "text",
-                    "input": text,  # Full text, no truncation
-                    "provider": {
-                        "type": "microsoft",
-                        "voice_id": "tr-TR-EmelNeural"
+            print(f"🔑 D-ID Auth: Basic {self.api_key[:15]}...{self.api_key[-10:]}")
+            
+            # Use audio file if provided (bypasses text limit)
+            if audio_path and Path(audio_path).exists():
+                # Get Replit domain for audio URL
+                replit_domain = os.getenv("REPLIT_DOMAINS", "").split(",")[0]
+                audio_filename = Path(audio_path).name
+                audio_url = f"https://{replit_domain}/audio/{audio_filename}"
+                
+                print(f"🎵 Using audio file: {audio_url}")
+                
+                payload = {
+                    "source_url": avatar_url,
+                    "script": {
+                        "type": "audio",
+                        "audio_url": audio_url
+                    },
+                    "config": {
+                        "fluent": True,
+                        "result_format": "mp4"
                     }
-                },
-                "config": {
-                    "fluent": True,
-                    "result_format": "mp4"
                 }
-            }
+            else:
+                # Fallback to text (with 750 word limit for 5min video)
+                text_limited = " ".join(text.split()[:750])  # ~750 words = 5min
+                print(f"📝 Using text (limited to 750 words)")
+                
+                payload = {
+                    "source_url": avatar_url,
+                    "script": {
+                        "type": "text",
+                        "input": text_limited,
+                        "provider": {
+                            "type": "microsoft",
+                            "voice_id": "tr-TR-EmelNeural"
+                        }
+                    },
+                    "config": {
+                        "fluent": True,
+                        "result_format": "mp4"
+                    }
+                }
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
@@ -120,19 +148,12 @@ class DIDService:
             return await self._create_demo_video(text, avatar_type)
     
     async def _create_demo_video(self, text: str, avatar_type: str) -> str:
-        """Create demo video placeholder - valid MP4 file"""
+        """Return existing demo video or raise error"""
         video_path = f"videos/demo_avatar_{avatar_type}.mp4"
         
-        Path("videos").mkdir(exist_ok=True)
-        
-        mp4_header = bytes([
-            0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70,
-            0x69, 0x73, 0x6F, 0x6D, 0x00, 0x00, 0x02, 0x00,
-            0x69, 0x73, 0x6F, 0x6D, 0x69, 0x73, 0x6F, 0x32,
-            0x61, 0x76, 0x63, 0x31, 0x6D, 0x70, 0x34, 0x31,
-        ])
-        
-        Path(video_path).write_bytes(mp4_header)
-        
-        print(f"📝 Demo avatar video created: {video_path}")
-        return video_path
+        # Check if demo video exists
+        if Path(video_path).exists():
+            print(f"📝 Using existing demo avatar video: {video_path}")
+            return video_path
+        else:
+            raise Exception(f"Demo video not found: {video_path}. Please create valid demo videos first.")

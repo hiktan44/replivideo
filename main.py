@@ -418,9 +418,10 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
             from services.did_service import DIDService
             did_service = DIDService()
             avatar_video = await did_service.create_avatar_video(
-                text=str(script)[:500],  # D-ID has text limit, ensure string
+                text=str(script),
                 avatar_type=request.avatar_type,
-                custom_image_path=custom_image_path
+                custom_image_path=custom_image_path,
+                audio_path=audio_path  # Full 200s audio, bypasses text limit
             )
             
             await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
@@ -503,9 +504,10 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
                 from services.did_service import DIDService
                 did_service = DIDService()
                 avatar_video = await did_service.create_avatar_video(
-                    text=str(script)[:500],  # D-ID has text limit for lip-sync
+                    text=str(script),
                     avatar_type=request.avatar_type,
-                    custom_image_path=custom_image_path
+                    custom_image_path=custom_image_path,
+                    audio_path=audio_file  # Full 200s audio, bypasses text limit
                 )
                 
                 await update_progress(video_id, 75, "🎬 Looping avatar video to match full audio...")
@@ -611,9 +613,10 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             from services.did_service import DIDService
             did_service = DIDService()
             avatar_video = await did_service.create_avatar_video(
-                text=str(script)[:500],  # D-ID has text limit, ensure string
+                text=str(script),
                 avatar_type=request.avatar_type,
-                custom_image_path=custom_image_path
+                custom_image_path=custom_image_path,
+                audio_path=audio_path  # Full 200s audio, bypasses text limit
             )
             
             await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
@@ -729,9 +732,10 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
                 from services.did_service import DIDService
                 did_service = DIDService()
                 avatar_video = await did_service.create_avatar_video(
-                    text=str(script)[:500],  # D-ID has text limit for lip-sync
+                    text=str(script),
                     avatar_type=request.avatar_type,
-                    custom_image_path=custom_image_path
+                    custom_image_path=custom_image_path,
+                    audio_path=audio_file  # Full 200s audio, bypasses text limit
                 )
                 
                 await update_progress(video_id, 85, "🎬 Looping avatar video to match full audio...")
@@ -2027,6 +2031,19 @@ async def stream_video(video_id: str):
             "Content-Disposition": "inline",
             "Accept-Ranges": "bytes"
         }
+    )
+
+@app.get("/audio/{filename}")
+async def serve_audio(filename: str):
+    """Serve audio file for D-ID API"""
+    audio_path = f"videos/{filename}"
+    
+    if not Path(audio_path).exists():
+        raise HTTPException(status_code=404, detail="Audio file not found")
+    
+    return FileResponse(
+        path=audio_path,
+        media_type="audio/mpeg"
     )
 
 @app.get("/api/videos/{video_id}/download")
