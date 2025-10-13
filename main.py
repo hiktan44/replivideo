@@ -2044,10 +2044,14 @@ async def download_video(video_id: str):
     if not Path(video_path).exists():
         raise HTTPException(status_code=404, detail="Video file not found")
     
+    # Force download with proper headers
     return FileResponse(
         path=video_path,
         media_type="video/mp4",
-        filename=f"github_video_{video_id}.mp4"
+        filename=f"video_{video_id}.mp4",
+        headers={
+            "Content-Disposition": f"attachment; filename=video_{video_id}.mp4"
+        }
     )
 
 @app.get("/api/status")
