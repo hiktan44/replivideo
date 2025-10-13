@@ -397,7 +397,7 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
             await update_progress(video_id, 35, "🎤 Creating Turkish professional voiceover...")
             audio_file = await TTSService.generate_audio(script, request.voice_type)
             
-            await update_progress(video_id, 60, "🎭 Creating custom avatar video with lip-sync...")
+            await update_progress(video_id, 60, "🎭 Creating avatar video with lip-sync...")
             # Get custom image path - check both jpg and png
             custom_image_path = None
             if request.custom_avatar_image_id:
@@ -414,15 +414,32 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
                     print(f"⚠️ Custom image not found: {request.custom_avatar_image_id}")
                     custom_image_path = None
             
-            # Create avatar video with custom photo
-            from services.did_service import DIDService
-            did_service = DIDService()
-            avatar_video = await did_service.create_avatar_video(
-                text=str(script),
-                avatar_type=request.avatar_type,
-                custom_image_path=custom_image_path,
-                audio_path=audio_file  # Full 200s audio, bypasses text limit
-            )
+            # Create avatar video: custom photo requires D-ID, preset can use HeyGen or D-ID
+            if custom_image_path:
+                # Custom photo: must use D-ID
+                print("🖼️ Creating avatar video with custom photo (D-ID)...")
+                from services.did_service import DIDService
+                did_service = DIDService()
+                avatar_video = await did_service.create_avatar_video(
+                    text=str(script),
+                    avatar_type=request.avatar_type,
+                    custom_image_path=custom_image_path,
+                    audio_path=audio_file
+                )
+            else:
+                # Preset avatar: use selected provider
+                print(f"👤 Creating avatar video with preset avatar ({request.provider.upper()})...")
+                if request.provider == "heygen":
+                    from services.heygen_service import HeyGenService
+                    service = HeyGenService()
+                else:
+                    from services.did_service import DIDService
+                    service = DIDService()
+                
+                avatar_video = await service.create_avatar_video(
+                    text=str(script),
+                    avatar_type=request.avatar_type
+                )
             
             await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
             from services.video_composer import VideoComposer
@@ -604,7 +621,7 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             await update_progress(video_id, 50, "🎤 Creating Turkish professional voiceover...")
             audio_file = await TTSService.generate_audio(script, request.voice_type)
             
-            await update_progress(video_id, 65, "🎭 Creating custom avatar video with lip-sync...")
+            await update_progress(video_id, 65, "🎭 Creating avatar video with lip-sync...")
             # Get custom image path - check both jpg and png
             custom_image_path = None
             if request.custom_avatar_image_id:
@@ -619,15 +636,32 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
                 else:
                     print(f"⚠️ Custom image not found: {request.custom_avatar_image_id}")
             
-            # Create avatar video with custom photo
-            from services.did_service import DIDService
-            did_service = DIDService()
-            avatar_video = await did_service.create_avatar_video(
-                text=str(script),
-                avatar_type=request.avatar_type,
-                custom_image_path=custom_image_path,
-                audio_path=audio_file  # Full 200s audio, bypasses text limit
-            )
+            # Create avatar video: custom photo requires D-ID, preset can use HeyGen or D-ID
+            if custom_image_path:
+                # Custom photo: must use D-ID
+                print("🖼️ Creating avatar video with custom photo (D-ID)...")
+                from services.did_service import DIDService
+                did_service = DIDService()
+                avatar_video = await did_service.create_avatar_video(
+                    text=str(script),
+                    avatar_type=request.avatar_type,
+                    custom_image_path=custom_image_path,
+                    audio_path=audio_file
+                )
+            else:
+                # Preset avatar: use selected provider
+                print(f"👤 Creating avatar video with preset avatar ({request.provider.upper()})...")
+                if request.provider == "heygen":
+                    from services.heygen_service import HeyGenService
+                    service = HeyGenService()
+                else:
+                    from services.did_service import DIDService
+                    service = DIDService()
+                
+                avatar_video = await service.create_avatar_video(
+                    text=str(script),
+                    avatar_type=request.avatar_type
+                )
             
             await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
             from services.video_composer import VideoComposer
@@ -872,7 +906,7 @@ async def home():
                         <label class="block text-sm font-medium text-gray-700 mb-2">🎥 Video Oluşturma Modu</label>
                         <select id="videoMode" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" onchange="toggleModeOptions()">
                             <option value="screen_recording">🚀 Sadece Ekran Kaydı + Ses (Hızlı - Avatar YOK)</option>
-                            <option value="custom_avatar_overlay">📸 Ekran Kaydı + Fotoğraflı Avatar Overlay (Köşede siz konuşursunuz!)</option>
+                            <option value="custom_avatar_overlay">🎭 Ekran Kaydı + Avatar Overlay (Köşede avatar konuşur - İnteraktif!)</option>
                             <option value="avatar">👤 Sadece AI Avatar (Yavaş - Web sitesi YOK)</option>
                         </select>
                         <p class="text-xs text-blue-600 mt-2">
@@ -882,12 +916,12 @@ async def home():
                     
                     <!-- Custom Avatar Photo Upload (for custom_avatar_overlay mode) -->
                     <div id="customAvatarUpload" class="hidden mb-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">📷 Fotoğrafınızı Yükleyin</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">📷 Kendi Fotoğrafınızı Yükleyin (Opsiyonel)</label>
                         <input type="file" id="avatarPhoto" accept="image/jpeg,image/png,image/jpg" 
                                onchange="handlePhotoUpload()"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white">
-                        <p class="text-xs text-purple-600 mt-2">✨ Fotoğrafınız konuşacak ve videonun köşesinde yuvarlak çerçevede görünecek! (Max 5MB, JPG/PNG)</p>
-                        <p class="text-xs text-amber-600 mt-1 font-medium">⚠️ Önemli: Kendi fotoğrafınız için Provider'da "D-ID" seçili olmalı (HeyGen desteklemiyor)</p>
+                        <p class="text-xs text-purple-600 mt-2">✨ Fotoğraf yüklerseniz: Fotoğrafınız konuşur (D-ID gerekli). Yüklemezseniz: Preset avatar kullanılır (HeyGen/D-ID)</p>
+                        <p class="text-xs text-gray-600 mt-1">📝 Max 5MB, JPG/PNG formatı</p>
                         <div id="photoPreview" class="mt-3 hidden">
                             <p class="text-sm text-gray-600 mb-2">Önizleme:</p>
                             <img id="photoPreviewImg" class="w-24 h-24 rounded-full object-cover border-4 border-purple-400" />
@@ -1500,11 +1534,8 @@ async def home():
             
             // Check if photo is uploaded for custom_avatar_overlay mode or avatar mode with photo
             let customAvatarImageId = null;
-            if (mode === 'custom_avatar_overlay') {
-                if (!uploadedPhotoId) {
-                    alert('Lütfen önce bir fotoğraf yükleyin!');
-                    return;
-                }
+            if (mode === 'custom_avatar_overlay' && uploadedPhotoId) {
+                // Custom avatar overlay can use custom photo (optional)
                 customAvatarImageId = uploadedPhotoId;
             } else if (mode === 'avatar' && uploadedPhotoId) {
                 // Avatar mode also supports custom photos
@@ -1615,11 +1646,8 @@ async def home():
             
             // Check if photo is uploaded for custom_avatar_overlay mode or avatar mode with photo
             let customAvatarImageId = null;
-            if (mode === 'custom_avatar_overlay') {
-                if (!uploadedPhotoId) {
-                    alert('Lütfen önce bir fotoğraf yükleyin!');
-                    return;
-                }
+            if (mode === 'custom_avatar_overlay' && uploadedPhotoId) {
+                // Custom avatar overlay can use custom photo (optional)
                 customAvatarImageId = uploadedPhotoId;
             } else if (mode === 'avatar' && uploadedPhotoId) {
                 // Avatar mode also supports custom photos
