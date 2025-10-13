@@ -64,22 +64,23 @@ class DIDService:
                 "Content-Type": "application/json"
             }
             
-            print(f"🔑 D-ID Auth: Basic {self.api_key[:15]}...{self.api_key[-10:]}")
+            if self.api_key:
+                print(f"🔑 D-ID Auth: Basic {self.api_key[:15]}...{self.api_key[-10:]}")
             
             # Use audio file if provided (bypasses text limit)
             if audio_path and Path(audio_path).exists():
-                # Get Replit domain for audio URL
-                replit_domain = os.getenv("REPLIT_DOMAINS", "").split(",")[0]
-                audio_filename = Path(audio_path).name
-                audio_url = f"https://{replit_domain}/audio/{audio_filename}"
+                # Convert audio to base64 data URI
+                audio_data = Path(audio_path).read_bytes()
+                base64_audio = base64.b64encode(audio_data).decode('utf-8')
+                audio_data_uri = f"data:audio/mpeg;base64,{base64_audio}"
                 
-                print(f"🎵 Using audio file: {audio_url}")
+                print(f"🎵 Using audio file (base64, {len(audio_data)} bytes)")
                 
                 payload = {
                     "source_url": avatar_url,
                     "script": {
                         "type": "audio",
-                        "audio_url": audio_url
+                        "audio_url": audio_data_uri
                     },
                     "config": {
                         "fluent": True,
