@@ -20,12 +20,12 @@ class HeyGenService:
         else:
             self.enabled = False
         
-        # HeyGen avatar IDs - using their public avatars
+        # HeyGen avatar IDs - using their public avatars (Updated Oct 2025)
         self.avatars = {
             "professional_female": "Daisy-inskirt-20220818",
-            "professional_male": "Josh_lite3_20230714",
+            "professional_male": "Adrian_public_2_20240312",  # Adrian in Blue Suit
             "casual_female": "Anna_public_3_20240108",
-            "casual_male": "Lucas_public_2_20240210"
+            "casual_male": "Adrian_public_20240312"  # Adrian in Blue Sweater
         }
         
         # Default Turkish voice ID (will be dynamically fetched)
