@@ -130,8 +130,8 @@ class VideoCreateWithScriptRequest(BaseModel):
     
     @model_validator(mode='after')
     def validate_source(self):
-        if not self.url and not self.document_id:
-            raise ValueError("Either url or document_id must be provided")
+        # Script is already provided, so url/document_id is optional
+        # Only validate if both are provided (cannot have both)
         if self.url and self.document_id:
             raise ValueError("Cannot provide both url and document_id")
         
@@ -515,13 +515,23 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
                 # Use loop composer for custom photo (short D-ID clip)
                 final_video = await VideoComposer.compose_video_with_loop(avatar_video, audio_file, video_id)
             else:
-                # Standard avatar rendering
-                avatar_videos = await AvatarService.render_avatar_segments(script, request.avatar_type, audio_file, request.provider)
+                # Standard avatar rendering - create single video from script text
+                if request.provider == "heygen":
+                    from services.heygen_service import HeyGenService
+                    service = HeyGenService()
+                else:
+                    from services.did_service import DIDService
+                    service = DIDService()
+                
+                avatar_video = await service.create_avatar_video(
+                    text=str(script),
+                    avatar_type=request.avatar_type
+                )
                 
                 await update_progress(video_id, 75, "🎬 Composing final video...")
                 from services.video_composer import VideoComposer
-                composer = VideoComposer()
-                final_video = await composer.compose_video(avatar_videos, audio_file, video_id)
+                # Mux avatar video with audio
+                final_video = await VideoComposer.mux_screen_recording_with_audio(avatar_video, audio_file, video_id)
             
             await update_progress(video_id, 100, "✅ Video completed successfully!")
             videos_db[video_id]["status"] = "completed"
