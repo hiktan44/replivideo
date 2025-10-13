@@ -70,7 +70,7 @@ class ScreenRecorderService:
                 
                 # Navigate to URL
                 print(f"📄 Loading page: {url}")
-                await page.goto(url, wait_until='networkidle', timeout=30000)
+                await page.goto(url, wait_until='networkidle', timeout=60000)
                 await asyncio.sleep(2)
                 
                 # Calculate scroll parameters based on duration
