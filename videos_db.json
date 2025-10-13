@@ -612,14 +612,15 @@
   },
   "2347c633-d31b-4859-935e-68d8a1955dd5": {
     "video_id": "2347c633-d31b-4859-935e-68d8a1955dd5",
-    "status": "processing",
-    "progress": 50,
-    "current_stage": "\ud83c\udfad Rendering avatar video segments with HEYGEN...",
-    "video_url": null,
+    "status": "completed",
+    "progress": 100,
+    "current_stage": "\u2705 Video completed successfully!",
+    "video_url": "/api/videos/2347c633-d31b-4859-935e-68d8a1955dd5/download",
     "youtube_url": null,
     "created_at": "2025-10-13T14:49:38.689794",
-    "completed_at": null,
+    "completed_at": "2025-10-13T14:52:00.609188",
     "error": null,
-    "approved_script": "K\u0131sa test videosu."
+    "approved_script": "K\u0131sa test videosu.",
+    "video_path": "videos/final_2347c633-d31b-4859-935e-68d8a1955dd5.mp4"
   }
 }
