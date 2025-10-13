@@ -519,5 +519,18 @@
     "error": null,
     "approved_script": "Bu bir test videosu. HeyGen API ile T\u00fcrk\u00e7e konu\u015fan avatar video olu\u015fturuyoruz. Sistem \u00e7al\u0131\u015f\u0131yor mu test ediyoruz.",
     "video_path": "videos/final_1ed18f94-c162-4f2e-ae45-e9c265f74bd4.mp4"
+  },
+  "d97af34a-2e7a-4c5f-afa3-f6427a4e952f": {
+    "video_id": "d97af34a-2e7a-4c5f-afa3-f6427a4e952f",
+    "status": "completed",
+    "progress": 100,
+    "current_stage": "\u2705 Video completed successfully!",
+    "video_url": "/api/videos/d97af34a-2e7a-4c5f-afa3-f6427a4e952f/download",
+    "youtube_url": null,
+    "created_at": "2025-10-13T11:29:41.441440",
+    "completed_at": "2025-10-13T11:32:42.578905",
+    "error": null,
+    "approved_script": "Merhaba! Ben yapay zeka destekli avatar sistemiyim. HeyGen teknolojisi ile T\u00fcrk\u00e7e konu\u015fabiliyorum. Bu video, sistemimizin nas\u0131l \u00e7al\u0131\u015ft\u0131\u011f\u0131n\u0131 g\u00f6stermek i\u00e7in haz\u0131rland\u0131. Profesyonel avatar g\u00f6r\u00fcn\u00fcm\u00fc ve do\u011fal T\u00fcrk\u00e7e seslendirme ile e\u011fitim videolar\u0131, tan\u0131t\u0131mlar ve prezentasyonlar olu\u015fturabilirsiniz.",
+    "video_path": "videos/final_d97af34a-2e7a-4c5f-afa3-f6427a4e952f.mp4"
   }
 }
