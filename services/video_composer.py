@@ -302,15 +302,15 @@ class VideoComposer:
             overlay_position = positions.get(position, positions["bottom_right"])
             
             # FFmpeg command with circular mask overlay
-            # Scale avatar to 150x150, apply circular mask, overlay on screen recording, add audio
+            # Scale avatar to 300x300, apply circular mask, overlay on screen recording, add audio
             overlay_cmd = [
                 'ffmpeg', '-y',
                 '-i', screen_video,      # Input 0: Screen recording
                 '-i', avatar_video,      # Input 1: Avatar video
                 '-i', audio_file,        # Input 2: Audio narration
                 '-filter_complex',
-                f'[1:v]scale=150:150,format=yuva420p,geq=lum=' + chr(39) + 'lum(X,Y)' + chr(39) + ':a=' + chr(39) + 
-                'if(lt(sqrt(pow(X-75,2)+pow(Y-75,2)),75),255,0)' + chr(39) + '[avatar];' +
+                f'[1:v]scale=300:300,format=yuva420p,geq=lum=' + chr(39) + 'lum(X,Y)' + chr(39) + ':a=' + chr(39) + 
+                'if(lt(sqrt(pow(X-150,2)+pow(Y-150,2)),150),255,0)' + chr(39) + '[avatar];' +
                 f'[0:v][avatar]overlay={overlay_position}[v]',
                 '-map', '[v]',           # Use filtered video
                 '-map', '2:a',           # Use audio from input 2
