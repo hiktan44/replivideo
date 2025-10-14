@@ -1609,13 +1609,27 @@ async def home():
             
             const downloadUrl = `/api/videos/${currentVideoId}/download`;
             
-            // Create temporary link and trigger download
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = `video_${currentVideoId}.mp4`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            // Method 1: Try direct download with fetch (better for large files)
+            fetch(downloadUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error('İndirme başarısız');
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `video_${currentVideoId}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                })
+                .catch(error => {
+                    console.error('Download error:', error);
+                    // Fallback: Open in new tab
+                    window.open(downloadUrl, '_blank');
+                });
         };
         
         window.createVideo = async function() {
