@@ -414,42 +414,61 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
                     print(f"⚠️ Custom image not found: {request.custom_avatar_image_id}")
                     custom_image_path = None
             
-            # Create avatar video: custom photo requires D-ID, preset can use HeyGen or D-ID
-            if custom_image_path:
-                # Custom photo: must use D-ID
-                print("🖼️ Creating avatar video with custom photo (D-ID)...")
-                from services.did_service import DIDService
-                did_service = DIDService()
-                avatar_video = await did_service.create_avatar_video(
-                    text=str(script),
-                    avatar_type=request.avatar_type,
-                    custom_image_path=custom_image_path,
-                    audio_path=audio_file
+            # Create avatar video with error handling (graceful degradation)
+            avatar_video = None
+            try:
+                # Create avatar video: custom photo requires D-ID, preset can use HeyGen or D-ID
+                if custom_image_path:
+                    # Custom photo: must use D-ID
+                    print("🖼️ Creating avatar video with custom photo (D-ID)...")
+                    from services.did_service import DIDService
+                    did_service = DIDService()
+                    avatar_video = await did_service.create_avatar_video(
+                        text=str(script),
+                        avatar_type=request.avatar_type,
+                        custom_image_path=custom_image_path,
+                        audio_path=audio_file
+                    )
+                else:
+                    # Preset avatar: use selected provider
+                    print(f"👤 Creating avatar video with preset avatar ({request.provider.upper()})...")
+                    if request.provider == "heygen":
+                        from services.heygen_service import HeyGenService
+                        service = HeyGenService()
+                    else:
+                        from services.did_service import DIDService
+                        service = DIDService()
+                    
+                    avatar_video = await service.create_avatar_video(
+                        text=str(script),
+                        avatar_type=request.avatar_type
+                    )
+            except Exception as avatar_error:
+                print(f"⚠️ Avatar generation failed: {avatar_error}")
+                print("📺 Falling back to screen recording + audio only...")
+                avatar_video = None
+            
+            # Compose final video
+            from services.video_composer import VideoComposer
+            from pathlib import Path as PathLib
+            if avatar_video and PathLib(avatar_video).exists():
+                # Success: overlay avatar on screen recording
+                await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
+                final_video = await VideoComposer.overlay_avatar_on_screen_recording(
+                    screen_video=screen_video,
+                    avatar_video=avatar_video,
+                    audio_file=audio_file,
+                    video_id=video_id,
+                    position="bottom_right"
                 )
             else:
-                # Preset avatar: use selected provider
-                print(f"👤 Creating avatar video with preset avatar ({request.provider.upper()})...")
-                if request.provider == "heygen":
-                    from services.heygen_service import HeyGenService
-                    service = HeyGenService()
-                else:
-                    from services.did_service import DIDService
-                    service = DIDService()
-                
-                avatar_video = await service.create_avatar_video(
-                    text=str(script),
-                    avatar_type=request.avatar_type
+                # Fallback: screen recording + audio (no avatar)
+                await update_progress(video_id, 85, "🎬 Composing screen recording with audio (avatar unavailable)...")
+                final_video = await VideoComposer.mux_screen_recording_with_audio(
+                    screen_video=screen_video,
+                    audio_file=audio_file,
+                    video_id=video_id
                 )
-            
-            await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
-            from services.video_composer import VideoComposer
-            final_video = await VideoComposer.overlay_avatar_on_screen_recording(
-                screen_video=screen_video,
-                avatar_video=avatar_video,
-                audio_file=audio_file,
-                video_id=video_id,
-                position="bottom_right"
-            )
             
             await update_progress(video_id, 100, "✅ Video completed successfully!")
             videos_db[video_id]["status"] = "completed"
@@ -636,42 +655,61 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
                 else:
                     print(f"⚠️ Custom image not found: {request.custom_avatar_image_id}")
             
-            # Create avatar video: custom photo requires D-ID, preset can use HeyGen or D-ID
-            if custom_image_path:
-                # Custom photo: must use D-ID
-                print("🖼️ Creating avatar video with custom photo (D-ID)...")
-                from services.did_service import DIDService
-                did_service = DIDService()
-                avatar_video = await did_service.create_avatar_video(
-                    text=str(script),
-                    avatar_type=request.avatar_type,
-                    custom_image_path=custom_image_path,
-                    audio_path=audio_file
+            # Create avatar video with error handling (graceful degradation)
+            avatar_video = None
+            try:
+                # Create avatar video: custom photo requires D-ID, preset can use HeyGen or D-ID
+                if custom_image_path:
+                    # Custom photo: must use D-ID
+                    print("🖼️ Creating avatar video with custom photo (D-ID)...")
+                    from services.did_service import DIDService
+                    did_service = DIDService()
+                    avatar_video = await did_service.create_avatar_video(
+                        text=str(script),
+                        avatar_type=request.avatar_type,
+                        custom_image_path=custom_image_path,
+                        audio_path=audio_file
+                    )
+                else:
+                    # Preset avatar: use selected provider
+                    print(f"👤 Creating avatar video with preset avatar ({request.provider.upper()})...")
+                    if request.provider == "heygen":
+                        from services.heygen_service import HeyGenService
+                        service = HeyGenService()
+                    else:
+                        from services.did_service import DIDService
+                        service = DIDService()
+                    
+                    avatar_video = await service.create_avatar_video(
+                        text=str(script),
+                        avatar_type=request.avatar_type
+                    )
+            except Exception as avatar_error:
+                print(f"⚠️ Avatar generation failed: {avatar_error}")
+                print("📺 Falling back to screen recording + audio only...")
+                avatar_video = None
+            
+            # Compose final video
+            from services.video_composer import VideoComposer
+            from pathlib import Path as PathLib
+            if avatar_video and PathLib(avatar_video).exists():
+                # Success: overlay avatar on screen recording
+                await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
+                final_video = await VideoComposer.overlay_avatar_on_screen_recording(
+                    screen_video=screen_video,
+                    avatar_video=avatar_video,
+                    audio_file=audio_file,
+                    video_id=video_id,
+                    position="bottom_right"
                 )
             else:
-                # Preset avatar: use selected provider
-                print(f"👤 Creating avatar video with preset avatar ({request.provider.upper()})...")
-                if request.provider == "heygen":
-                    from services.heygen_service import HeyGenService
-                    service = HeyGenService()
-                else:
-                    from services.did_service import DIDService
-                    service = DIDService()
-                
-                avatar_video = await service.create_avatar_video(
-                    text=str(script),
-                    avatar_type=request.avatar_type
+                # Fallback: screen recording + audio (no avatar)
+                await update_progress(video_id, 85, "🎬 Composing screen recording with audio (avatar unavailable)...")
+                final_video = await VideoComposer.mux_screen_recording_with_audio(
+                    screen_video=screen_video,
+                    audio_file=audio_file,
+                    video_id=video_id
                 )
-            
-            await update_progress(video_id, 85, "🎬 Overlaying circular avatar on screen recording...")
-            from services.video_composer import VideoComposer
-            final_video = await VideoComposer.overlay_avatar_on_screen_recording(
-                screen_video=screen_video,
-                avatar_video=avatar_video,
-                audio_file=audio_file,
-                video_id=video_id,
-                position="bottom_right"
-            )
             
             await update_progress(video_id, 100, "✅ Video completed successfully!")
             videos_db[video_id]["status"] = "completed"

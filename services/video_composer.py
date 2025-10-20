@@ -230,10 +230,13 @@ class VideoComposer:
             print(f"🎬 Muxing screen recording with audio...")
             
             # Convert webm to mp4 and add audio in one step
+            # Explicitly map video from input 0 and audio from input 1
             mux_cmd = [
                 'ffmpeg', '-y',
                 '-i', screen_video,
                 '-i', audio_file,
+                '-map', '0:v:0',  # Take video from first input (screen recording)
+                '-map', '1:a:0',  # Take audio from second input (narration)
                 '-c:v', 'libx264',  # Re-encode video to h264
                 '-preset', 'medium',
                 '-crf', '23',
