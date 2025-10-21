@@ -865,6 +865,7 @@ async def home():
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Avatar Video Maker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="bg-gradient-to-br from-purple-100 to-blue-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
@@ -1078,14 +1079,20 @@ async def home():
                     <textarea id="scriptText" rows="20" 
                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm mb-4"></textarea>
                     
-                    <div class="flex gap-3">
-                        <button onclick="approveScript()" 
-                                class="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">
-                            ✅ Onayla ve Video Oluştur
-                        </button>
-                        <button onclick="cancelScript()" 
-                                class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition">
-                            ❌ İptal Et
+                    <div class="flex flex-col gap-3">
+                        <div class="flex gap-3">
+                            <button onclick="approveScript()" 
+                                    class="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">
+                                ✅ Onayla ve Video Oluştur
+                            </button>
+                            <button onclick="cancelScript()" 
+                                    class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition">
+                                ❌ İptal Et
+                            </button>
+                        </div>
+                        <button onclick="downloadScriptAsPDF()" 
+                                class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                            📄 Script'i PDF Olarak İndir
                         </button>
                     </div>
                 </div>
@@ -1548,6 +1555,51 @@ async def home():
         window.cancelScript = function() {
             document.getElementById('scriptPreview').classList.add('hidden');
             currentScript = null;
+        };
+        
+        window.downloadScriptAsPDF = function() {
+            const scriptText = document.getElementById('scriptText').value;
+            if (!scriptText) {
+                alert('Script metni boş');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFont("helvetica");
+                doc.setFontSize(12);
+                
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 20;
+                const maxWidth = pageWidth - 2 * margin;
+                const lineHeight = 7;
+                let y = margin;
+                
+                const lines = scriptText.split('\\n');
+                
+                lines.forEach((line) => {
+                    const wrappedLines = doc.splitTextToSize(line || ' ', maxWidth);
+                    
+                    wrappedLines.forEach((wrappedLine) => {
+                        if (y + lineHeight > pageHeight - margin) {
+                            doc.addPage();
+                            y = margin;
+                        }
+                        doc.text(wrappedLine, margin, y);
+                        y += lineHeight;
+                    });
+                });
+                
+                const fileName = `video-script-${new Date().toISOString().slice(0,10)}.pdf`;
+                doc.save(fileName);
+                
+            } catch (error) {
+                alert('PDF oluşturma hatası: ' + error.message);
+                console.error('PDF error:', error);
+            }
         };
         
         window.approveScript = async function() {
