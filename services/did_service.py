@@ -67,46 +67,29 @@ class DIDService:
             if self.api_key:
                 print(f"🔑 D-ID Auth: Basic {self.api_key[:15]}...{self.api_key[-10:]}")
             
-            # Use audio file if provided (bypasses text limit)
-            if audio_path and Path(audio_path).exists():
-                # Convert audio to base64 data URI
-                audio_data = Path(audio_path).read_bytes()
-                base64_audio = base64.b64encode(audio_data).decode('utf-8')
-                audio_data_uri = f"data:audio/mpeg;base64,{base64_audio}"
-                
-                print(f"🎵 Using audio file (base64, {len(audio_data)} bytes)")
-                
-                payload = {
-                    "source_url": avatar_url,
-                    "script": {
-                        "type": "audio",
-                        "audio_url": audio_data_uri
-                    },
-                    "config": {
-                        "fluent": True,
-                        "result_format": "mp4"
+            # D-ID has payload size limits (~10MB total request)
+            # Use short text to generate avatar video, then loop it to match full audio duration
+            # Limit to 100 words (~30 seconds) to avoid timeouts and large payloads
+            text_limited = " ".join(text.split()[:100])
+            
+            print(f"📝 Using text for D-ID (limited to 100 words for quick generation)")
+            print(f"   Full audio will be added later via FFmpeg loop composition")
+            
+            payload = {
+                "source_url": avatar_url,
+                "script": {
+                    "type": "text",
+                    "input": text_limited,
+                    "provider": {
+                        "type": "microsoft",
+                        "voice_id": "tr-TR-EmelNeural"
                     }
+                },
+                "config": {
+                    "fluent": True,
+                    "result_format": "mp4"
                 }
-            else:
-                # Fallback to text (with 750 word limit for 5min video)
-                text_limited = " ".join(text.split()[:750])  # ~750 words = 5min
-                print(f"📝 Using text (limited to 750 words)")
-                
-                payload = {
-                    "source_url": avatar_url,
-                    "script": {
-                        "type": "text",
-                        "input": text_limited,
-                        "provider": {
-                            "type": "microsoft",
-                            "voice_id": "tr-TR-EmelNeural"
-                        }
-                    },
-                    "config": {
-                        "fluent": True,
-                        "result_format": "mp4"
-                    }
-                }
+            }
             
             async with httpx.AsyncClient(timeout=60.0) as client:
                 print(f"📤 Creating D-ID talk...")

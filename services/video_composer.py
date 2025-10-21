@@ -295,6 +295,19 @@ class VideoComposer:
             
             print(f"🎬 Creating circular avatar overlay on screen recording...")
             
+            # Get audio duration to match video length
+            probe_cmd = [
+                'ffprobe', '-v', 'error',
+                '-show_entries', 'format=duration',
+                '-of', 'default=noprint_wrappers=1:nokey=1',
+                audio_file
+            ]
+            
+            import subprocess
+            result = subprocess.run(probe_cmd, capture_output=True, text=True)
+            audio_duration = float(result.stdout.strip())
+            print(f"🎵 Audio duration: {audio_duration:.2f}s")
+            
             # Position mapping (X:Y coordinates, offset from edges)
             positions = {
                 "bottom_right": "W-w-20:H-h-20",
@@ -304,25 +317,26 @@ class VideoComposer:
             }
             overlay_position = positions.get(position, positions["bottom_right"])
             
-            # FFmpeg command with circular mask overlay
-            # Scale avatar to 300x300, apply circular mask, overlay on screen recording, add audio
+            # FFmpeg command with circular mask overlay + avatar looping
+            # Loop avatar video infinitely and trim to audio duration
             overlay_cmd = [
                 'ffmpeg', '-y',
-                '-i', screen_video,      # Input 0: Screen recording
-                '-i', avatar_video,      # Input 1: Avatar video
-                '-i', audio_file,        # Input 2: Audio narration
+                '-i', screen_video,          # Input 0: Screen recording
+                '-stream_loop', '-1',        # Loop avatar infinitely
+                '-i', avatar_video,          # Input 1: Avatar video (looped)
+                '-i', audio_file,            # Input 2: Audio narration
                 '-filter_complex',
                 f'[1:v]scale=300:300,format=yuva420p,geq=lum=' + chr(39) + 'lum(X,Y)' + chr(39) + ':a=' + chr(39) + 
                 'if(lt(sqrt(pow(X-150,2)+pow(Y-150,2)),150),255,0)' + chr(39) + '[avatar];' +
                 f'[0:v][avatar]overlay={overlay_position}[v]',
-                '-map', '[v]',           # Use filtered video
-                '-map', '2:a',           # Use audio from input 2
+                '-map', '[v]',               # Use filtered video
+                '-map', '2:a',               # Use audio from input 2
                 '-c:v', 'libx264',
                 '-preset', 'medium',
                 '-crf', '23',
                 '-c:a', 'aac',
                 '-b:a', '128k',
-                '-shortest',
+                '-t', str(audio_duration),   # Trim to audio duration
                 '-movflags', '+faststart',
                 final_video_path
             ]
