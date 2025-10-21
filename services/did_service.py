@@ -108,18 +108,30 @@ class DIDService:
                     }
                 }
             
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                print(f"📤 Creating D-ID talk...")
+                print(f"🖼️ Avatar source: {avatar_url[:100]}...")
+                
                 response = await client.post(
                     f"{self.base_url}/talks",
                     headers=headers,
                     json=payload
                 )
-                response.raise_for_status()
+                
+                print(f"📥 D-ID Response Status: {response.status_code}")
+                
+                if response.status_code != 201:
+                    error_text = response.text
+                    print(f"❌ D-ID API Error: {error_text}")
+                    raise Exception(f"D-ID API returned {response.status_code}: {error_text}")
+                
                 result = response.json()
                 talk_id = result["id"]
+                print(f"✅ Talk created with ID: {talk_id}")
                 
-                for _ in range(30):
-                    await asyncio.sleep(2)
+                # Wait up to 5 minutes (60 iterations * 5 seconds)
+                for i in range(60):
+                    await asyncio.sleep(5)
                     
                     status_response = await client.get(
                         f"{self.base_url}/talks/{talk_id}",
@@ -127,8 +139,13 @@ class DIDService:
                     )
                     status_data = status_response.json()
                     
-                    if status_data["status"] == "done":
-                        video_url = status_data["result_url"]
+                    current_status = status_data.get("status", "unknown")
+                    elapsed = (i + 1) * 5
+                    print(f"⏳ D-ID status: {current_status} ({elapsed}s elapsed)")
+                    
+                    if current_status == "done":
+                        video_url = status_data.get("result_url")
+                        print(f"🎬 Video ready at: {video_url}")
                         
                         video_response = await client.get(video_url)
                         video_path = f"videos/avatar_{talk_id}.mp4"
@@ -136,13 +153,17 @@ class DIDService:
                         Path("videos").mkdir(exist_ok=True)
                         Path(video_path).write_bytes(video_response.content)
                         
-                        print(f"✅ Avatar video created: {video_path}")
+                        print(f"✅ Avatar video created: {video_path} ({len(video_response.content)} bytes)")
                         return video_path
                     
-                    elif status_data["status"] == "error":
-                        raise Exception(f"D-ID error: {status_data.get('error')}")
+                    elif current_status == "error":
+                        error_detail = status_data.get("error", "Unknown error")
+                        print(f"❌ D-ID generation failed: {error_detail}")
+                        print(f"📋 Full response: {status_data}")
+                        raise Exception(f"D-ID error: {error_detail}")
                 
-                raise Exception("D-ID timeout")
+                print(f"⏰ D-ID timeout after 5 minutes")
+                raise Exception("D-ID timeout after 5 minutes")
                 
         except Exception as e:
             print(f"❌ D-ID error: {str(e)}")
