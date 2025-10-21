@@ -1241,11 +1241,11 @@ async def home():
                 urlTabBtn.classList.remove('text-purple-600', 'border-b-2', 'border-purple-600');
                 urlTabBtn.classList.add('text-gray-500');
                 
-                // Disable screen recording mode for documents
+                // All modes available for documents too!
                 videoMode.innerHTML = `
-                    <option value="avatar">👤 AI Avatar (Önerilen)</option>
-                    <option value="custom_avatar_overlay" disabled>📸 Ekran Kaydı + Avatar (⚠️ Sadece URL için)</option>
-                    <option value="screen_recording" disabled>🚀 Ekran Kaydı (⚠️ Sadece URL için)</option>
+                    <option value="avatar">👤 AI Avatar (Sadece konuşan avatar)</option>
+                    <option value="custom_avatar_overlay">🎭 Ekran Kaydı + Avatar Overlay (Köşede avatar konuşur)</option>
+                    <option value="screen_recording">🚀 Sadece Ekran Kaydı + Ses (Hızlı - Avatar YOK)</option>
                 `;
                 videoMode.value = 'avatar';
             }

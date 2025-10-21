@@ -72,7 +72,11 @@ class VideoComposer:
                 'ffmpeg', '-y',
                 '-i', temp_video_path,
                 '-i', audio_file,
-                '-c:v', 'copy',
+                '-c:v', 'libx264',  # Re-encode for browser compatibility
+                '-profile:v', 'main',  # H264 main profile for wide compatibility
+                '-pix_fmt', 'yuv420p',  # Pixel format for browser playback
+                '-preset', 'medium',
+                '-crf', '23',
                 '-c:a', 'aac',
                 '-b:a', '128k',
                 '-shortest',  # End video when shortest stream ends
@@ -142,6 +146,8 @@ class VideoComposer:
                 '-i', avatar_video,
                 '-i', audio_file,
                 '-c:v', 'libx264',  # Re-encode video for looping
+                '-profile:v', 'main',  # H264 main profile for browser compatibility
+                '-pix_fmt', 'yuv420p',  # Pixel format for browser playback
                 '-preset', 'fast',
                 '-c:a', 'aac',
                 '-b:a', '128k',
@@ -238,6 +244,8 @@ class VideoComposer:
                 '-map', '0:v:0',  # Take video from first input (screen recording)
                 '-map', '1:a:0',  # Take audio from second input (narration)
                 '-c:v', 'libx264',  # Re-encode video to h264
+                '-profile:v', 'main',  # H264 main profile for browser compatibility
+                '-pix_fmt', 'yuv420p',  # Pixel format for browser playback
                 '-preset', 'medium',
                 '-crf', '23',
                 '-c:a', 'aac',
@@ -332,6 +340,8 @@ class VideoComposer:
                 '-map', '[v]',               # Use filtered video
                 '-map', '2:a',               # Use audio from input 2
                 '-c:v', 'libx264',
+                '-profile:v', 'main',        # H264 main profile for browser compatibility
+                '-pix_fmt', 'yuv420p',       # Pixel format for browser playback
                 '-preset', 'medium',
                 '-crf', '23',
                 '-c:a', 'aac',

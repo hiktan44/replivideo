@@ -106,10 +106,18 @@ Ana Başlıklar/Bölümler:
 Doküman İçeriği:
 {content}
 
+ÇOK ÖNEMLİ - İÇERİĞİ DİKKATLİCE OKU:
+1. Dokümanın GERÇEK konusunu ve bağlamını doğru belirle
+2. Terimlerin anlamını BAĞLAMINA göre yorumla
+3. Örneğin: "saç ekimi" = tıbbi/estetik prosedür (hair transplant), "bitki ekimi" = tarım/ziraat
+4. Dokümanın içeriğindeki teknik terimleri ve kavramları DOĞRU alanla eşleştir
+5. Başlıkları ve içeriği birlikte değerlendir - ne hakkında olduğunu NET olarak anla
+6. Farklı alanları KARIŞTIRMA - örneğin tıp dokümanını tarım olarak sunma!
+
 Gereksinimler:
 1. Toplam süre: Tam {video_duration} dakika (yaklaşık {config['word_range']} kelime)
 2. Dil: Türkçe, profesyonel ama samimi
-3. Stil: Eğitici ve açıklayıcı - dokümanın içeriğini anlat
+3. Stil: Eğitici ve açıklayıcı - dokümanın GERÇEK içeriğini doğru bağlamda anlat
 4. Akış rehberi:
 {doc_flow}
 
@@ -117,9 +125,10 @@ Gereksinimler:
 6. Timestamp veya [zaman] işaretleri kullanma
 7. Dokümandaki konuları doğal geçişlerle birbirine bağla ("Şimdi...", "Gelin bakalım...", "Peki..." gibi)
 8. Sanki birisiyle konuşuyormuş gibi samimi ve akıcı yaz
-9. Teknik terimleri günlük dille açıkla
+9. Teknik terimleri günlük dille açıkla AMA doğru alanda (tıp, tarım, teknoloji vb.)
 10. İzleyiciyle bağ kur - dokümanın önemli noktalarını vurgula ve örneklerle açıkla
 11. Dokümanın içeriğini özetle ve öğretici bir şekilde sun - "web sitesi" veya "proje" deme, dokümanın kendisinden bahset
+12. İçeriği analiz et ve DOĞRU KONUYU belirle - yanlış alanla karıştırma!
 {f'''
 
 ÖNEMLİ - KULLANICININ ÖZEL TALİMATLARI:
