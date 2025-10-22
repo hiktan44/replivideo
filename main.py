@@ -604,10 +604,12 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             from services.website_analyzer import ContentAnalyzer
             
             # Get content based on source type
+            is_document = False
             if request.url:
                 repo_data = await ContentAnalyzer.analyze_url(str(request.url))
                 source_url = str(request.url)
             elif request.document_id:
+                # For documents, create HTML slides first
                 from pathlib import Path as PathLib
                 doc_path = PathLib("videos/uploads/documents")
                 doc_files = list(doc_path.glob(f"{request.document_id}.*"))
@@ -615,7 +617,16 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
                     raise Exception("Doküman bulunamadı")
                 doc_file = doc_files[0]
                 repo_data = await ContentAnalyzer.analyze_document(str(doc_file), doc_file.name)
-                source_url = None  # No URL for documents
+                
+                # Create HTML slides from document
+                await update_progress(video_id, 12, "📄 Creating slides from document...")
+                from services.document_slide_generator import DocumentSlideGenerator
+                html_file = await DocumentSlideGenerator.create_slides_from_document(
+                    repo_data['description'], 
+                    video_id
+                )
+                source_url = html_file
+                is_document = True
             else:
                 raise Exception("URL veya document_id gerekli")
             
@@ -623,16 +634,19 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             from services.screen_recorder import ScreenRecorderService
             recorder = ScreenRecorderService()
             
-            # Screen recording requires URL
-            if not source_url:
-                raise Exception("Doküman için screen recording modu desteklenmez. Lütfen avatar modu kullanın.")
-            
-            screen_video = await recorder.record_website(
-                url=source_url,
-                video_id=video_id,
-                duration_minutes=request.video_duration,
-                scroll_speed=request.scroll_speed
-            )
+            if is_document:
+                screen_video = await recorder.record_html_file(
+                    html_file_path=source_url,
+                    video_id=video_id,
+                    duration_minutes=request.video_duration
+                )
+            else:
+                screen_video = await recorder.record_website(
+                    url=source_url,
+                    video_id=video_id,
+                    duration_minutes=request.video_duration,
+                    scroll_speed=request.scroll_speed
+                )
             
             await update_progress(video_id, 35, f"✍️ Generating {request.video_duration}-minute Turkish narration script with AI...")
             script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration, custom_prompt=getattr(request, 'custom_prompt', None))
@@ -726,24 +740,49 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
             from services.website_analyzer import ContentAnalyzer
             
             # Get content based on source type
+            is_document = False
             if request.url:
                 repo_data = await ContentAnalyzer.analyze_url(str(request.url))
                 source_url = str(request.url)
             elif request.document_id:
-                # Screen recording mode does not support documents
-                raise Exception("Doküman için screen recording modu desteklenmez. Lütfen avatar modu kullanın.")
+                # For documents, create HTML slides first
+                from pathlib import Path as PathLib
+                doc_path = PathLib("videos/uploads/documents")
+                doc_files = list(doc_path.glob(f"{request.document_id}.*"))
+                if not doc_files:
+                    raise Exception("Doküman bulunamadı")
+                doc_file = doc_files[0]
+                repo_data = await ContentAnalyzer.analyze_document(str(doc_file), doc_file.name)
+                
+                # Create HTML slides from document
+                await update_progress(video_id, 15, "📄 Creating slides from document...")
+                from services.document_slide_generator import DocumentSlideGenerator
+                html_file = await DocumentSlideGenerator.create_slides_from_document(
+                    repo_data['description'], 
+                    video_id
+                )
+                source_url = html_file
+                is_document = True
             else:
                 raise Exception("URL veya document_id gerekli")
             
             await update_progress(video_id, 20, f"🎬 Recording screen with browser automation...")
             from services.screen_recorder import ScreenRecorderService
             recorder = ScreenRecorderService()
-            screen_video = await recorder.record_website(
-                url=source_url,
-                video_id=video_id,
-                duration_minutes=request.video_duration,
-                scroll_speed=request.scroll_speed
-            )
+            
+            if is_document:
+                screen_video = await recorder.record_html_file(
+                    html_file_path=source_url,
+                    video_id=video_id,
+                    duration_minutes=request.video_duration
+                )
+            else:
+                screen_video = await recorder.record_website(
+                    url=source_url,
+                    video_id=video_id,
+                    duration_minutes=request.video_duration,
+                    scroll_speed=request.scroll_speed
+                )
             
             await update_progress(video_id, 50, f"✍️ Generating {request.video_duration}-minute Turkish narration script with AI...")
             script = await ScriptGenerator.generate_script(repo_data, request.video_style, request.video_duration, custom_prompt=getattr(request, 'custom_prompt', None))
