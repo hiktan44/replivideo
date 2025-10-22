@@ -377,22 +377,47 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
             await update_progress(video_id, 10, "🎬 Recording screen with browser automation...")
             
             # Determine source URL
+            is_document = False
             if request.url:
                 source_url = str(request.url)
             elif request.document_id:
-                # Screen recording requires URL
-                raise Exception("Doküman için screen recording modu desteklenmez. Lütfen avatar modu kullanın.")
+                # For documents, create HTML slides first
+                from pathlib import Path as PathLib
+                from services.website_analyzer import ContentAnalyzer
+                doc_path = PathLib("videos/uploads/documents")
+                doc_files = list(doc_path.glob(f"{request.document_id}.*"))
+                if not doc_files:
+                    raise Exception("Doküman bulunamadı")
+                doc_file = doc_files[0]
+                repo_data = await ContentAnalyzer.analyze_document(str(doc_file), doc_file.name)
+                
+                # Create HTML slides from document
+                from services.document_slide_generator import DocumentSlideGenerator
+                html_file = await DocumentSlideGenerator.create_slides_from_document(
+                    repo_data['description'], 
+                    video_id
+                )
+                source_url = html_file
+                is_document = True
             else:
                 raise Exception("URL veya document_id gerekli")
             
             from services.screen_recorder import ScreenRecorderService
             recorder = ScreenRecorderService()
-            screen_video = await recorder.record_website(
-                url=source_url,
-                video_id=video_id,
-                duration_minutes=request.video_duration,
-                scroll_speed=request.scroll_speed
-            )
+            
+            if is_document:
+                screen_video = await recorder.record_html_file(
+                    html_file_path=source_url,
+                    video_id=video_id,
+                    duration_minutes=request.video_duration
+                )
+            else:
+                screen_video = await recorder.record_website(
+                    url=source_url,
+                    video_id=video_id,
+                    duration_minutes=request.video_duration,
+                    scroll_speed=request.scroll_speed
+                )
             
             await update_progress(video_id, 35, "🎤 Creating Turkish professional voiceover...")
             audio_file = await TTSService.generate_audio(script, request.voice_type)
@@ -481,22 +506,47 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
             await update_progress(video_id, 10, "📊 Preparing screen recording...")
             
             # Determine source URL
+            is_document = False
             if request.url:
                 source_url = str(request.url)
             elif request.document_id:
-                # Screen recording requires URL
-                raise Exception("Doküman için screen recording modu desteklenmez. Lütfen avatar modu kullanın.")
+                # For documents, create HTML slides first
+                from pathlib import Path as PathLib
+                from services.website_analyzer import ContentAnalyzer
+                doc_path = PathLib("videos/uploads/documents")
+                doc_files = list(doc_path.glob(f"{request.document_id}.*"))
+                if not doc_files:
+                    raise Exception("Doküman bulunamadı")
+                doc_file = doc_files[0]
+                repo_data = await ContentAnalyzer.analyze_document(str(doc_file), doc_file.name)
+                
+                # Create HTML slides from document
+                from services.document_slide_generator import DocumentSlideGenerator
+                html_file = await DocumentSlideGenerator.create_slides_from_document(
+                    repo_data['description'], 
+                    video_id
+                )
+                source_url = html_file
+                is_document = True
             else:
                 raise Exception("URL veya document_id gerekli")
             
             from services.screen_recorder import ScreenRecorderService
             recorder = ScreenRecorderService()
-            screen_video = await recorder.record_website(
-                url=source_url,
-                video_id=video_id,
-                duration_minutes=request.video_duration,
-                scroll_speed=request.scroll_speed
-            )
+            
+            if is_document:
+                screen_video = await recorder.record_html_file(
+                    html_file_path=source_url,
+                    video_id=video_id,
+                    duration_minutes=request.video_duration
+                )
+            else:
+                screen_video = await recorder.record_website(
+                    url=source_url,
+                    video_id=video_id,
+                    duration_minutes=request.video_duration,
+                    scroll_speed=request.scroll_speed
+                )
             
             await update_progress(video_id, 50, "🎤 Creating Turkish professional voiceover...")
             audio_file = await TTSService.generate_audio(script, request.voice_type)
