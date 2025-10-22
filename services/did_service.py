@@ -27,7 +27,7 @@ class DIDService:
             "casual_male": "https://d-id-public-bucket.s3.amazonaws.com/mark.jpg"
         }
     
-    async def create_avatar_video(self, text: str, avatar_type: str, custom_image_path: Optional[str] = None, audio_path: Optional[str] = None) -> str:
+    async def create_avatar_video(self, text: str, avatar_type: str, custom_image_path: Optional[str] = None, audio_path: Optional[str] = None, voice_type: str = "tr_female_professional") -> str:
         """Create avatar video using D-ID API
         
         Args:
@@ -35,7 +35,19 @@ class DIDService:
             avatar_type: Preset avatar type (ignored if custom_image_path provided)
             custom_image_path: Optional path to custom user photo for personalized avatar
             audio_path: Optional path to pre-generated audio file (bypasses text limit)
+            voice_type: Voice type to use (e.g., tr_male_professional, tr_female_professional)
         """
+        
+        # Map voice types to Microsoft Azure D-ID voice IDs
+        voice_mapping = {
+            "tr_female_professional": "tr-TR-EmelNeural",
+            "tr_male_professional": "tr-TR-AhmetNeural",
+            "tr_female_friendly": "tr-TR-EmelNeural",
+            "tr_male_friendly": "tr-TR-AhmetNeural"
+        }
+        
+        voice_id = voice_mapping.get(voice_type, "tr-TR-EmelNeural")
+        print(f"🎤 Using voice: {voice_type} → {voice_id}")
         
         if not self.enabled:
             print("⚠️ D-ID API key not found - using demo mode")
@@ -82,7 +94,7 @@ class DIDService:
                     "input": text_limited,
                     "provider": {
                         "type": "microsoft",
-                        "voice_id": "tr-TR-EmelNeural"
+                        "voice_id": voice_id
                     }
                 },
                 "config": {
@@ -94,6 +106,13 @@ class DIDService:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 print(f"📤 Creating D-ID talk...")
                 print(f"🖼️ Avatar source: {avatar_url[:100]}...")
+                print(f"📝 Text preview (first 50 chars): {text_limited[:50]}...")
+                if custom_image_path:
+                    image_path = Path(custom_image_path)
+                    if image_path.exists():
+                        image_data = image_path.read_bytes()
+                        base64_image = base64.b64encode(image_data).decode('utf-8')
+                        print(f"📊 Image size: {len(base64_image)} bytes (base64), {image_path.stat().st_size / 1024 / 1024:.2f} MB (original)")
                 
                 response = await client.post(
                     f"{self.base_url}/talks",
@@ -102,10 +121,18 @@ class DIDService:
                 )
                 
                 print(f"📥 D-ID Response Status: {response.status_code}")
+                print(f"📥 D-ID Response Headers: {dict(response.headers)}")
                 
                 if response.status_code != 201:
                     error_text = response.text
                     print(f"❌ D-ID API Error: {error_text}")
+                    print(f"❌ D-ID Request Payload Size: {len(str(payload))} bytes")
+                    # Try to check if image is too large
+                    if custom_image_path:
+                        img_path = Path(custom_image_path)
+                        if img_path.exists():
+                            actual_size = img_path.stat().st_size
+                            print(f"❌ Original image size: {actual_size} bytes ({actual_size / 1024 / 1024:.2f} MB)")
                     raise Exception(f"D-ID API returned {response.status_code}: {error_text}")
                 
                 result = response.json()

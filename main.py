@@ -454,7 +454,8 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
                         text=str(script),
                         avatar_type=request.avatar_type,
                         custom_image_path=custom_image_path,
-                        audio_path=audio_file
+                        audio_path=audio_file,
+                        voice_type=request.voice_type
                     )
                 else:
                     # Preset avatar: use selected provider
@@ -615,7 +616,8 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
                 
                 avatar_video = await service.create_avatar_video(
                     text=str(script),
-                    avatar_type=request.avatar_type
+                    avatar_type=request.avatar_type,
+                    voice_type=request.voice_type
                 )
                 
                 await update_progress(video_id, 75, "🎬 Composing final video...")
@@ -736,7 +738,8 @@ async def process_video_pipeline(video_id: str, request: VideoCreateRequest):
                         text=str(script),
                         avatar_type=request.avatar_type,
                         custom_image_path=custom_image_path,
-                        audio_path=audio_file
+                        audio_path=audio_file,
+                        voice_type=request.voice_type
                     )
                 else:
                     # Preset avatar: use selected provider
