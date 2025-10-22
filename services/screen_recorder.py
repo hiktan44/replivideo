@@ -19,6 +19,35 @@ class ScreenRecorderService:
         self.video_dir = Path("videos/recordings")
         self.video_dir.mkdir(parents=True, exist_ok=True)
     
+    async def record_html_file(
+        self,
+        html_file_path: str,
+        video_id: str,
+        duration_minutes: int = 10
+    ) -> str:
+        """
+        Record a local HTML file (for document slides)
+        
+        Args:
+            html_file_path: Path to HTML file
+            video_id: Unique video identifier
+            duration_minutes: Target duration
+            
+        Returns:
+            Path to recorded video file
+        """
+        from pathlib import Path as PathLib
+        abs_path = PathLib(html_file_path).resolve()
+        file_url = f"file://{abs_path}"
+        
+        print(f"🎬 Recording HTML slides: {html_file_path}")
+        return await self.record_website(
+            url=file_url,
+            video_id=video_id,
+            duration_minutes=duration_minutes,
+            scroll_speed="medium"
+        )
+    
     async def record_website(
         self, 
         url: str, 
@@ -30,7 +59,7 @@ class ScreenRecorderService:
         Record a website with automatic navigation
         
         Args:
-            url: Website URL to record
+            url: Website URL to record (http/https or file://)
             video_id: Unique video identifier
             duration_minutes: Target duration (5, 10, or 15 minutes)
             scroll_speed: Scroll speed (slow, medium, fast)
