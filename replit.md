@@ -8,9 +8,25 @@ AI Avatar Video Maker is a FastAPI-based web application that automatically gene
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (October 11, 2025)
+## Recent Changes (October 22, 2025)
 
-**HeyGen Custom Avatar Bug Fix** (Latest):
+**Document Slide Generation - Screen Recording for Documents** (Latest):
+- ✅ Added `DocumentSlideGenerator` service - converts document text into beautiful HTML slides
+- ✅ Auto-sections content (~120 words per slide) with intelligent title detection
+- ✅ Beautiful Tailwind CSS styled slides with gradients, content cards, and slide counters
+- ✅ Auto-advance slides every 8 seconds for smooth video flow
+- ✅ Screen recording modes now work with documents (generates HTML slides → records them)
+- ✅ All 4 video modes support documents: avatar-only, screen+avatar overlay, screen-only, custom avatar overlay
+- ✅ Documents get visual content (slides) + avatar/narration = engaging educational videos
+- ✅ Fixed "Doküman için screen recording modu desteklenmez" error - all modes now work!
+
+**Browser Video Playback Fix** (October 22, 2025):
+- ✅ All FFmpeg compositions now use H264 main profile (`-profile:v main`)
+- ✅ Added `yuv420p` pixel format for universal browser compatibility
+- ✅ Videos now play directly in browser without download required
+- ✅ Applied to: avatar loop, screen recording mux, avatar overlay compositions
+
+**HeyGen Custom Avatar Bug Fix** (October 11, 2025):
 - ✅ Fixed critical error: "string indices must be integers, not 'str'" when using custom photos with HeyGen
 - ✅ Added Pydantic validator to enforce D-ID provider when custom_avatar_image_id is provided
 - ✅ Frontend now auto-switches to D-ID when custom photo is uploaded
