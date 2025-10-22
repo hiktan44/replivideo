@@ -17,15 +17,69 @@ class DIDService:
         
         if self.api_key:
             self.enabled = True
+            # D-ID requires Basic auth with base64 encoded "api_key:" (note the colon)
+            auth_string = f"{self.api_key}:"
+            self.auth_token = base64.b64encode(auth_string.encode()).decode()
         else:
             self.enabled = False
+            self.auth_token = None
         
         self.avatar_images = {
-            "professional_female": "https://d-id-public-bucket.s3.amazonaws.com/alice.jpg",
-            "professional_male": "https://d-id-public-bucket.s3.amazonaws.com/adam.jpg",
-            "casual_female": "https://d-id-public-bucket.s3.amazonaws.com/amy.jpg",
-            "casual_male": "https://d-id-public-bucket.s3.amazonaws.com/mark.jpg"
+            "professional_female": "https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg",
+            "professional_male": "https://d-id-public-bucket.s3.us-west-2.amazonaws.com/adam.jpg",
+            "casual_female": "https://d-id-public-bucket.s3.us-west-2.amazonaws.com/amy.jpg",
+            "casual_male": "https://d-id-public-bucket.s3.us-west-2.amazonaws.com/mark.jpg"
         }
+    
+    async def _upload_custom_image(self, image_path: str) -> str:
+        """Upload custom image to D-ID and return the URL
+        
+        Args:
+            image_path: Path to the local image file
+            
+        Returns:
+            URL of the uploaded image
+        """
+        print(f"📤 Uploading custom image to D-ID: {image_path}")
+        
+        image_file = Path(image_path)
+        if not image_file.exists():
+            raise FileNotFoundError(f"Image not found: {image_path}")
+        
+        # D-ID expects multipart/form-data with binary file
+        headers = {
+            "Authorization": f"Basic {self.auth_token}",
+            "accept": "application/json"
+        }
+        
+        # Read image as binary
+        with open(image_path, 'rb') as f:
+            files = {
+                'image': (image_file.name, f, 'image/jpeg')
+            }
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/images",
+                    headers=headers,
+                    files=files
+                )
+                
+                print(f"📥 D-ID Upload Response: {response.status_code}")
+                
+                if response.status_code != 201:
+                    error_text = response.text
+                    print(f"❌ D-ID Image Upload Error: {error_text}")
+                    raise Exception(f"Failed to upload image: {response.status_code} - {error_text}")
+                
+                result = response.json()
+                image_url = result.get("url")
+                
+                if not image_url:
+                    raise Exception("No URL returned from D-ID image upload")
+                
+                print(f"✅ Image uploaded successfully: {image_url[:100]}...")
+                return image_url
     
     async def create_avatar_video(self, text: str, avatar_type: str, custom_image_path: Optional[str] = None, audio_path: Optional[str] = None, voice_type: str = "tr_female_professional") -> str:
         """Create avatar video using D-ID API
@@ -54,34 +108,31 @@ class DIDService:
             return await self._create_demo_video(text, avatar_type)
         
         try:
-            # Prepare avatar source
+            # Prepare avatar source URL
             if custom_image_path:
-                # Convert local image to base64 data URI for D-ID API
+                # Upload custom image first, then get URL
                 image_path = Path(custom_image_path)
                 if image_path.exists():
-                    image_data = image_path.read_bytes()
-                    base64_image = base64.b64encode(image_data).decode('utf-8')
-                    
-                    # Detect MIME type
-                    mime_type = "image/jpeg" if custom_image_path.endswith('.jpg') or custom_image_path.endswith('.jpeg') else "image/png"
-                    avatar_url = f"data:{mime_type};base64,{base64_image}"
+                    print(f"📤 Custom image detected - uploading to D-ID first...")
+                    avatar_url = await self._upload_custom_image(custom_image_path)
                 else:
                     print(f"⚠️ Custom image not found: {custom_image_path}, using default")
                     avatar_url = self.avatar_images.get(avatar_type, self.avatar_images["professional_female"])
             else:
+                # Use preset avatar
                 avatar_url = self.avatar_images.get(avatar_type, self.avatar_images["professional_female"])
             
+            # Correct Authorization header format
             headers = {
-                "Authorization": f"Basic {self.api_key}",
-                "Content-Type": "application/json"
+                "Authorization": f"Basic {self.auth_token}",
+                "Content-Type": "application/json",
+                "accept": "application/json"
             }
             
-            if self.api_key:
-                print(f"🔑 D-ID Auth: Basic {self.api_key[:15]}...{self.api_key[-10:]}")
+            print(f"🔑 D-ID Auth configured (Base64 encoded)")
             
-            # D-ID has payload size limits (~10MB total request)
-            # Use short text to generate avatar video, then loop it to match full audio duration
-            # Limit to 100 words (~30 seconds) to avoid timeouts and large payloads
+            # Use short text for quick generation (will loop video later)
+            # Limit to 100 words (~30 seconds) to avoid timeouts
             text_limited = " ".join(text.split()[:100])
             
             print(f"📝 Using text for D-ID (limited to 100 words for quick generation)")
@@ -107,12 +158,6 @@ class DIDService:
                 print(f"📤 Creating D-ID talk...")
                 print(f"🖼️ Avatar source: {avatar_url[:100]}...")
                 print(f"📝 Text preview (first 50 chars): {text_limited[:50]}...")
-                if custom_image_path:
-                    image_path = Path(custom_image_path)
-                    if image_path.exists():
-                        image_data = image_path.read_bytes()
-                        base64_image = base64.b64encode(image_data).decode('utf-8')
-                        print(f"📊 Image size: {len(base64_image)} bytes (base64), {image_path.stat().st_size / 1024 / 1024:.2f} MB (original)")
                 
                 response = await client.post(
                     f"{self.base_url}/talks",
@@ -121,18 +166,10 @@ class DIDService:
                 )
                 
                 print(f"📥 D-ID Response Status: {response.status_code}")
-                print(f"📥 D-ID Response Headers: {dict(response.headers)}")
                 
                 if response.status_code != 201:
                     error_text = response.text
                     print(f"❌ D-ID API Error: {error_text}")
-                    print(f"❌ D-ID Request Payload Size: {len(str(payload))} bytes")
-                    # Try to check if image is too large
-                    if custom_image_path:
-                        img_path = Path(custom_image_path)
-                        if img_path.exists():
-                            actual_size = img_path.stat().st_size
-                            print(f"❌ Original image size: {actual_size} bytes ({actual_size / 1024 / 1024:.2f} MB)")
                     raise Exception(f"D-ID API returned {response.status_code}: {error_text}")
                 
                 result = response.json()
