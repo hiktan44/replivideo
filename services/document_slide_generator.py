@@ -11,20 +11,20 @@ class DocumentSlideGenerator:
     """Generate HTML slides from document content"""
     
     @staticmethod
-    def split_into_sections(content: str, max_words_per_slide: int = 120) -> List[Dict[str, str]]:
+    def split_into_sections(content: str, max_words_per_slide: int = 80) -> List[Dict[str, str]]:
         """
         Split document content into logical sections for slides
         
         Args:
             content: Document text content
-            max_words_per_slide: Maximum words per slide
+            max_words_per_slide: Maximum words per slide (reduced for better readability)
             
         Returns:
-            List of sections with title and content
+            List of sections with title and content (sentences)
         """
         sections = []
         lines = content.split('\n')
-        current_section = {"title": "", "content": []}
+        current_section = {"title": "", "sentences": []}
         word_count = 0
         
         for line in lines:
@@ -37,28 +37,39 @@ class DocumentSlideGenerator:
                 len(line) < 60 and 
                 (line.isupper() or 
                  line[0].isupper() and ':' not in line or
-                 re.match(r'^[\d\.\)]+\s', line))  # Numbered titles
+                 re.match(r'^[\d\.\)]+\s', line))
             )
             
-            if is_title and word_count > 30:  # Start new section if we have enough content
-                if current_section["content"]:
+            if is_title and word_count > 20:
+                if current_section["sentences"]:
                     sections.append(current_section)
-                current_section = {"title": line, "content": []}
+                current_section = {"title": line, "sentences": []}
                 word_count = 0
             elif is_title and not current_section["title"]:
                 current_section["title"] = line
             else:
-                current_section["content"].append(line)
-                word_count += len(line.split())
+                # Split line into sentences for better highlighting
+                sentences = re.split(r'([.!?]+\s+)', line)
+                for i in range(0, len(sentences) - 1, 2):
+                    sentence = sentences[i] + (sentences[i + 1] if i + 1 < len(sentences) else '')
+                    sentence = sentence.strip()
+                    if sentence:
+                        current_section["sentences"].append(sentence)
+                        word_count += len(sentence.split())
+                
+                # If remaining text without punctuation
+                if len(sentences) % 2 == 1 and sentences[-1].strip():
+                    current_section["sentences"].append(sentences[-1].strip())
+                    word_count += len(sentences[-1].split())
                 
                 # Split if too long
                 if word_count > max_words_per_slide:
                     sections.append(current_section)
-                    current_section = {"title": "", "content": []}
+                    current_section = {"title": "", "sentences": []}
                     word_count = 0
         
         # Add last section
-        if current_section["content"]:
+        if current_section["sentences"]:
             sections.append(current_section)
         
         # If no sections found, create default sections
@@ -68,7 +79,7 @@ class DocumentSlideGenerator:
                 chunk = ' '.join(words[i:i + max_words_per_slide])
                 sections.append({
                     "title": f"Bölüm {len(sections) + 1}",
-                    "content": [chunk]
+                    "sentences": [chunk]
                 })
         
         return sections
@@ -76,10 +87,10 @@ class DocumentSlideGenerator:
     @staticmethod
     def generate_slide_html(section: Dict[str, str], slide_number: int, total_slides: int) -> str:
         """
-        Generate beautiful HTML for a single slide
+        Generate FULL-SCREEN HTML slide with sentence-by-sentence highlighting
         
         Args:
-            section: Section with title and content
+            section: Section with title and sentences
             slide_number: Current slide number
             total_slides: Total number of slides
             
@@ -87,8 +98,16 @@ class DocumentSlideGenerator:
             HTML string for the slide
         """
         title = section.get("title", f"Bölüm {slide_number}")
-        content_lines = section.get("content", [])
-        content_html = "<br><br>".join(content_lines)
+        sentences = section.get("sentences", [])
+        
+        # Create sentence spans for progressive highlighting
+        sentence_spans = []
+        for i, sentence in enumerate(sentences):
+            sentence_spans.append(
+                f'<span class="sentence" data-index="{i}">{sentence}</span>'
+            )
+        
+        content_html = ' '.join(sentence_spans)
         
         html = f"""
 <!DOCTYPE html>
@@ -103,30 +122,60 @@ class DocumentSlideGenerator:
             margin: 0;
             padding: 0;
             overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }}
+        
+        .sentence {{
+            transition: all 0.5s ease;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+            margin: 4px 0;
+        }}
+        
+        .sentence.active {{
+            background: linear-gradient(120deg, #ffd93d 0%, #ffb800 100%);
+            color: #000;
+            font-weight: 600;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 185, 0, 0.4);
+        }}
+        
+        .sentence.past {{
+            opacity: 0.5;
+        }}
+        
+        @keyframes pulse {{
+            0%, 100% {{ transform: scale(1.05); }}
+            50% {{ transform: scale(1.08); }}
+        }}
+        
+        .sentence.active {{
+            animation: pulse 2s ease-in-out infinite;
         }}
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen flex items-center justify-center p-12">
-    <div class="max-w-5xl w-full">
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-5xl font-bold text-gray-800 mb-4 leading-tight">
+<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 min-h-screen flex items-center justify-center p-8">
+    <div class="w-full h-full flex flex-col justify-center">
+        <!-- Title - EXTRA LARGE -->
+        <div class="mb-10 text-center">
+            <h1 class="text-7xl font-black text-white mb-6 leading-tight drop-shadow-2xl">
                 {title}
             </h1>
-            <div class="h-2 w-32 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
+            <div class="h-3 w-48 mx-auto bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full shadow-lg"></div>
         </div>
         
-        <!-- Content -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-10 border border-gray-200">
-            <div class="text-2xl text-gray-700 leading-relaxed space-y-4">
+        <!-- Content - FULL SCREEN, HUGE TEXT -->
+        <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-16 border-4 border-white/50 mx-auto max-w-7xl">
+            <div id="content" class="text-5xl text-gray-800 leading-loose tracking-wide">
                 {content_html}
             </div>
         </div>
         
-        <!-- Footer -->
-        <div class="mt-8 flex justify-between items-center text-gray-500">
-            <div class="text-lg">📄 Doküman İçeriği</div>
-            <div class="text-lg font-semibold">{slide_number} / {total_slides}</div>
+        <!-- Footer - Minimal -->
+        <div class="mt-8 flex justify-between items-center text-white/70 px-8">
+            <div class="text-2xl">📄 Doküman</div>
+            <div class="text-2xl font-bold">{slide_number} / {total_slides}</div>
         </div>
     </div>
 </body>
@@ -199,7 +248,10 @@ class DocumentSlideGenerator:
     <script>
         let currentSlide = 1;
         const totalSlides = """ + str(total_slides) + """;
-        const slideInterval = 8000; // 8 seconds per slide
+        const slideInterval = 10000; // 10 seconds per slide (more time for reading)
+        
+        let currentSentenceIndex = 0;
+        let sentenceHighlightInterval = null;
         
         function showSlide(n) {
             const slides = document.getElementsByClassName('slide');
@@ -210,6 +262,62 @@ class DocumentSlideGenerator:
             if (n < 1) { n = 1; }
             slides[n - 1].classList.add('active');
             currentSlide = n;
+            
+            // Reset sentence highlighting for new slide
+            startSentenceHighlighting();
+        }
+        
+        function startSentenceHighlighting() {
+            // Clear existing interval
+            if (sentenceHighlightInterval) {
+                clearInterval(sentenceHighlightInterval);
+            }
+            
+            // Get all sentences in current slide
+            const currentSlideElement = document.querySelector('.slide.active');
+            if (!currentSlideElement) return;
+            
+            const sentences = currentSlideElement.querySelectorAll('.sentence');
+            if (sentences.length === 0) return;
+            
+            // Reset all sentences
+            sentences.forEach(s => {
+                s.classList.remove('active', 'past');
+            });
+            
+            currentSentenceIndex = 0;
+            
+            // Calculate time per sentence (evenly distribute slide time)
+            const timePerSentence = slideInterval / sentences.length;
+            
+            // Highlight first sentence immediately
+            if (sentences[0]) {
+                sentences[0].classList.add('active');
+            }
+            
+            // Progressive highlighting
+            sentenceHighlightInterval = setInterval(() => {
+                if (currentSentenceIndex < sentences.length) {
+                    // Mark previous as past
+                    if (currentSentenceIndex > 0) {
+                        sentences[currentSentenceIndex - 1].classList.remove('active');
+                        sentences[currentSentenceIndex - 1].classList.add('past');
+                    }
+                    
+                    // Highlight current
+                    if (sentences[currentSentenceIndex]) {
+                        sentences[currentSentenceIndex].classList.add('active');
+                        
+                        // Smooth scroll to active sentence
+                        sentences[currentSentenceIndex].scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                    
+                    currentSentenceIndex++;
+                }
+            }, timePerSentence);
         }
         
         function nextSlide() {
@@ -221,7 +329,10 @@ class DocumentSlideGenerator:
         // Auto-advance slides
         setInterval(nextSlide, slideInterval);
         
-        // Expose function for external control
+        // Start sentence highlighting on first slide
+        startSentenceHighlighting();
+        
+        // Expose functions for external control
         window.showSlide = showSlide;
         window.nextSlide = nextSlide;
     </script>
