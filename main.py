@@ -2084,10 +2084,40 @@ async def upload_avatar_image(file: UploadFile = File(...)):
             img = Image.open(io.BytesIO(content))
             img.verify()
             
-            # Re-open to get dimensions (verify() closes the file)
+            # Re-open to process (verify() closes the file)
             img = Image.open(io.BytesIO(content))
+            original_width, original_height = img.size
+            print(f"✅ Resim geçerli: {original_width}x{original_height}")
+            
+            # OPTIMIZE FOR D-ID: Resize and compress to reduce payload size
+            # D-ID has ~10MB request limit, base64 encoding increases size 3-4x
+            # Target: max 512x512, JPG format, 85% quality
+            
+            MAX_SIZE = 512
+            needs_resize = original_width > MAX_SIZE or original_height > MAX_SIZE
+            
+            if needs_resize:
+                # Calculate new dimensions maintaining aspect ratio
+                ratio = min(MAX_SIZE / original_width, MAX_SIZE / original_height)
+                new_width = int(original_width * ratio)
+                new_height = int(original_height * ratio)
+                
+                print(f"📐 Resim küçültülüyor: {original_width}x{original_height} → {new_width}x{new_height}")
+                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            else:
+                new_width, new_height = original_width, original_height
+            
+            # Convert to RGB if needed (for JPG)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                print("🎨 RGBA/LA/P → RGB dönüşümü yapılıyor...")
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                img = background
+            
             width, height = img.size
-            print(f"✅ Resim geçerli: {width}x{height}")
+            
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Geçersiz resim dosyası: {str(e)}")
         
@@ -2098,14 +2128,22 @@ async def upload_avatar_image(file: UploadFile = File(...)):
         upload_dir = Path("videos/uploads")
         upload_dir.mkdir(parents=True, exist_ok=True)
         
-        # Save the image
-        file_ext = "jpg" if file.content_type == "image/jpeg" else "png"
+        # ALWAYS save as JPG for smaller file size (better for D-ID)
+        file_ext = "jpg"
         file_path = upload_dir / f"{image_id}.{file_ext}"
         
         print(f"💾 Dosya kaydediliyor: {file_path}")
-        with open(file_path, "wb") as f:
-            f.write(content)
-        print("✅ Dosya kaydedildi")
+        
+        # Save optimized JPG (quality 85% - good balance)
+        img.save(file_path, 'JPEG', quality=85, optimize=True)
+        
+        saved_size = file_path.stat().st_size
+        original_size = len(content)
+        compression_ratio = (1 - saved_size / original_size) * 100
+        
+        print(f"✅ Dosya kaydedildi ve optimize edildi!")
+        print(f"   Orijinal: {original_size / 1024:.1f} KB → Optimize: {saved_size / 1024:.1f} KB")
+        print(f"   Sıkıştırma: %{compression_ratio:.1f} tasarruf")
         
         # Don't save to DB for now - just return success
         print(f"✅ Upload tamamlandı: {image_id}")
