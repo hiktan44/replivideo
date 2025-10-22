@@ -393,8 +393,10 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
                 
                 # Create HTML slides from document
                 from services.document_slide_generator import DocumentSlideGenerator
+                # Use 'content' for documents, 'description' for URLs
+                content_text = repo_data.get('content') or repo_data.get('description', '')
                 html_file = await DocumentSlideGenerator.create_slides_from_document(
-                    repo_data['description'], 
+                    content_text, 
                     video_id
                 )
                 source_url = html_file
@@ -522,8 +524,10 @@ async def process_video_pipeline_with_script(video_id: str, request: VideoCreate
                 
                 # Create HTML slides from document
                 from services.document_slide_generator import DocumentSlideGenerator
+                # Use 'content' for documents, 'description' for URLs
+                content_text = repo_data.get('content') or repo_data.get('description', '')
                 html_file = await DocumentSlideGenerator.create_slides_from_document(
-                    repo_data['description'], 
+                    content_text, 
                     video_id
                 )
                 source_url = html_file
