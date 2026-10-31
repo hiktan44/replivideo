@@ -1,19 +1,21 @@
 """
 HeyGen Avatar Video Generation Service
-Creates talking avatar videos with HeyGen API v2
+Creates talking avatar videos with HeyGen API v3
 """
 
 import os
 import httpx
 import asyncio
-import json
+import re
+from urllib.parse import quote
+from uuid import uuid4
 from pathlib import Path
 from typing import Optional, Dict, List
 
 class HeyGenService:
     def __init__(self):
         self.api_key = os.getenv("HEYGEN_API_KEY")
-        self.base_url = "https://api.heygen.com"  # Use v1 and v2 mixed API
+        self.base_url = "https://api.heygen.com"
         
         if self.api_key:
             self.enabled = True
@@ -34,7 +36,7 @@ class HeyGenService:
     
     async def get_turkish_voices(self) -> List[Dict]:
         """Fetch available Turkish voices from HeyGen API"""
-        if self.voices_cache:
+        if self.voices_cache is not None:
             return self.voices_cache
         
         if not self.enabled:
@@ -47,22 +49,34 @@ class HeyGenService:
             }
             
             async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(
-                    f"{self.base_url}/v2/voices",
-                    headers=headers
-                )
-                response.raise_for_status()
-                data = response.json()
-                
-                # Filter Turkish voices (check language field for "Turkish" or "Turkey")
-                all_voices = data.get("data", {}).get("voices", [])
-                turkish_voices = [
-                    voice for voice in all_voices
-                    if "turkish" in voice.get("language", "").lower() or 
-                       "turkey" in voice.get("language", "").lower() or
-                       voice.get("language", "").lower() == "tr-tr"
-                ]
-                
+                turkish_voices = []
+                params = {"language": "Turkish", "limit": 100}
+                seen_tokens = set()
+                for _ in range(100):
+                    response = await client.get(
+                        f"{self.base_url}/v3/voices", headers=headers, params=params
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+                    voices = data.get("data")
+                    if not isinstance(voices, list):
+                        raise ValueError("Unexpected v3 voice list response")
+                    turkish_voices.extend(
+                        voice for voice in voices
+                        if voice.get("voice_id") and
+                        str(voice.get("language") or "").lower() in
+                        {"turkish", "turkey", "tr-tr", "tr"}
+                    )
+                    if not data.get("has_more"):
+                        break
+                    token = data.get("next_token")
+                    if not token or token in seen_tokens:
+                        raise ValueError("Invalid v3 voice pagination cursor")
+                    seen_tokens.add(token)
+                    params["token"] = token
+                else:
+                    raise ValueError("v3 voice pagination limit exceeded")
+
                 self.voices_cache = turkish_voices
                 
                 # Set default Turkish voice if found
@@ -84,7 +98,7 @@ class HeyGenService:
             return []
     
     async def create_avatar_video(self, text: str, avatar_type: str, voice_type: Optional[str] = None) -> str:
-        """Create avatar video using HeyGen API v2"""
+        """Create avatar video using HeyGen API v3"""
         
         if not self.enabled:
             print("⚠️ HeyGen API key not found - using demo mode")
@@ -111,35 +125,25 @@ class HeyGenService:
                 "Content-Type": "application/json"
             }
             
-            # Create video generation request (HeyGen v2 API format)
+            # Pin the former Studio renderer: v3 defaults to Avatar IV when
+            # engine is omitted. Keep the existing 720p landscape composition.
             payload = {
-                "video_inputs": [{
-                    "character": {
-                        "type": "avatar",
-                        "avatar_id": avatar_id
-                    },
-                    "voice": {
-                        "type": "text",
-                        "input_text": truncated_text,
-                        "voice_id": self.turkish_voice_id
-                    },
-                    "background": {
-                        "type": "color",
-                        "value": "#FFFFFF"
-                    }
-                }],
-                "dimension": {
-                    "width": 1280,
-                    "height": 720
-                },
-                "test": False
+                "type": "avatar",
+                "avatar_id": avatar_id,
+                "script": truncated_text,
+                "voice_id": self.turkish_voice_id,
+                "background": {"type": "color", "value": "#FFFFFF"},
+                "aspect_ratio": "16:9",
+                "resolution": "720p",
+                "engine": {"type": "avatar_iii"},
             }
-            
+            headers["Idempotency-Key"] = str(uuid4())
+
             async with httpx.AsyncClient(timeout=60.0) as client:
                 # Generate video
                 print(f"📤 Sending video generation request to HeyGen...")
                 response = await client.post(
-                    f"{self.base_url}/v2/video/generate",
+                    f"{self.base_url}/v3/videos",
                     headers=headers,
                     json=payload
                 )
@@ -161,25 +165,20 @@ class HeyGenService:
                     await asyncio.sleep(2)  # Wait 2 seconds between checks
                     
                     status_response = await client.get(
-                        f"{self.base_url}/v1/video_status.get",
-                        headers=headers,
-                        params={"video_id": video_id}
+                        f"{self.base_url}/v3/videos/{quote(video_id, safe='')}",
+                        headers={"X-Api-Key": self.api_key, "Accept": "application/json"}
                     )
                     status_response.raise_for_status()
                     status_data = status_response.json()
                     
-                    # Log status response for debugging
-                    if attempt % 10 == 0:  # Log every 20 seconds
-                        print(f"🔍 Status response: {json.dumps(status_data, indent=2)}")
-                    
-                    # V1 API returns code 100 for success
-                    if status_data.get("code") != 100:
-                        raise Exception(f"Status check error: {status_data.get('message', 'Unknown error')}")
-                    
-                    video_status = status_data.get("data", {}).get("status")
-                    
+                    # v3 wraps the result in data; it has no legacy code=100.
+                    if status_data.get("error"):
+                        raise RuntimeError("HeyGen status check failed")
+                    detail = status_data.get("data", {})
+                    video_status = detail.get("status")
+
                     if video_status == "completed":
-                        video_url = status_data.get("data", {}).get("video_url")
+                        video_url = detail.get("video_url")
                         
                         if not video_url:
                             raise Exception("No video URL in completed status")
@@ -190,7 +189,8 @@ class HeyGenService:
                         video_response.raise_for_status()
                         
                         # Save video locally
-                        video_path = f"videos/heygen_{video_id}.mp4"
+                        safe_id = re.sub(r"[^A-Za-z0-9_-]", "_", video_id)[:160]
+                        video_path = f"videos/heygen_{safe_id}.mp4"
                         Path("videos").mkdir(exist_ok=True)
                         Path(video_path).write_bytes(video_response.content)
                         
@@ -203,13 +203,12 @@ class HeyGenService:
                             print(f"⏳ Video {status_text}... ({attempt * 2}s elapsed)")
                     
                     elif video_status in ["failed", "error"]:
-                        error_msg = status_data.get("data", {}).get("error", {}).get("message", "Unknown error")
+                        error_msg = detail.get("failure_message") or detail.get("failure_code") or "Unknown error"
                         raise Exception(f"Video generation failed: {error_msg}")
                     
                     elif video_status not in ["processing", "pending", "waiting"]:
                         # Unknown status
                         print(f"⚠️ Unknown video status: {video_status}")
-                        print(f"   Full status data: {json.dumps(status_data, indent=2)}")
                 
                 raise Exception("Video generation timeout after 10 minutes")
                 
@@ -258,9 +257,8 @@ class HeyGenService:
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(
-                    f"{self.base_url}/v1/video_status.get",
-                    headers=headers,
-                    params={"video_id": video_id}
+                    f"{self.base_url}/v3/videos/{quote(video_id, safe='')}",
+                    headers=headers
                 )
                 response.raise_for_status()
                 return response.json()

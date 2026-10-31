@@ -157,3 +157,19 @@ This project is for educational and demonstration purposes.
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit issues or pull requests.
+
+## HeyGen v3 (2026-10-31)
+
+The HeyGen adapter uses `POST /v3/videos`, `GET /v3/videos/{video_id}` and paginated `GET /v3/voices?language=Turkish`. It explicitly selects `engine: {type: "avatar_iii"}` to retain the former Studio renderer, with 720p landscape output and the existing white background. v3 does not use the legacy `code: 100`, `video_inputs`, `dimension` or `test` fields.
+
+The API key stays on the backend as `HEYGEN_API_KEY`. Missing configuration, voices or provider failures retain the existing local demo fallback; that fallback never submits a second paid request. Public avatar IDs are still the configured presets; their availability and account entitlements must be checked with the workspace before a paid end-to-end run.
+
+Run the offline contract suite with:
+
+```bash
+python -m unittest discover -s tests -p test_heygen_integration.py -v
+```
+
+All HTTP requests and sleeps in that suite are mocked, even if a real key exists in the environment. It replaces the previous test script that could submit paid generations and print a key prefix. No paid API call or production deployment was performed for this migration.
+
+Reference: [HeyGen migration guide](https://developers.heygen.com/endpoint-version-comparison), [create video](https://developers.heygen.com/reference/create-video), [list voices](https://developers.heygen.com/reference/list-voices).
